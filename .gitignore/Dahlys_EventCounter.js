@@ -1,10 +1,10 @@
 /*:
- * @plugindesc Remote Event Count and Control
+ * @plugindesc Remote Event Count and Control by Name
  * @author dahlys
  *
  * @help
  * ==============================================================================
- * Remote Event Count and Control
+ * Remote Event Count and Control by Name
  * ============================================================================== 
  * 
  * Use: Count and Control events on the map. It is useful if you don't want 100
@@ -178,7 +178,7 @@
  
 // Event Counting 
  
-Game_Interpreter.prototype.GetEventSubset = function () {
+Game_Interpreter.prototype.countevent = function () {
 	var precheck = Array.prototype.slice.call(arguments);
 	for (var k = precheck.length - 4; k >= 0; k--) {
 		if (Array.isArray(precheck[k])) {
@@ -192,10 +192,8 @@ Game_Interpreter.prototype.GetEventSubset = function () {
 	var eventarray = [];
 	var condition = names[names.length - 1];
 	for (var i = 0; i < names.length - 3; i++) {
-		for (var id = 1; id < 999; id++) {
-			if ($dataMap.events[id] == null) {
-				break;
-			} else if ($dataMap.events[id].name.includes(names[i]) && eval(condition)) {
+		for (var id = 1; id < $dataMap.events.length; id++) {
+			if ($dataMap.events[id] != null && $dataMap.events[id].name.includes(names[i]) && eval(condition)) {
 				eventarray.push(id);
 			}
 		}
@@ -236,10 +234,8 @@ Game_Interpreter.prototype.controlevent = function () {
 	var selfswitchvalue = names[names.length - 2];
 	var condition = names[names.length - 1];
 	for (var i = 0; i < names.length - 3; i++) {
-		for (var id = 1; id < 999; id++) {
-			if ($dataMap.events[id] == null) {
-				break;
-			} else if ($dataMap.events[id].name.includes(names[i]) && eval(condition)) {
+		for (var id = 1; id < $dataMap.events.length; id++) {
+			if ($dataMap.events[id] != null && $dataMap.events[id].name.includes(names[i]) && eval(condition)) {
 				if (isNaN(selfswitchid)) {
 					$gameSelfSwitches.setValue([this._mapId, id, selfswitchid], selfswitchvalue);
 				} else {
@@ -268,9 +264,7 @@ Game_Interpreter.prototype.counteventarray = function () {
 	var sourcearray = $gameVariables.value(names[names.length - 2]);
 	for (var i = 0; i < names.length - 4; i++) {
 		for (var id = 0; id < sourcearray.length; id++) {
-			if ($dataMap.events[sourcearray[id]] == null) {
-				break;
-			} else if ($dataMap.events[sourcearray[id]].name.includes(names[i]) && eval(condition)) {
+			if ($dataMap.events[sourcearray[id]].name.includes(names[i]) && eval(condition)) {
 				eventarray.push(sourcearray[id]);
 			}
 		}
@@ -312,9 +306,7 @@ Game_Interpreter.prototype.controleventarray = function () {
 	var condition = names[names.length - 1];
 	for (var i = 0; i < names.length - 4; i++) {
 		for (var id = 0; id < sourcearray.length; id++) {
-			if ($dataMap.events[sourcearray[id]] == null) {
-				break;
-			} else if ($dataMap.events[sourcearray[id]].name.includes(names[i]) && eval(condition)) {
+			if ($dataMap.events[sourcearray[id]].name.includes(names[i]) && eval(condition)) {
 				if (isNaN(selfswitchid)) {
 					$gameSelfSwitches.setValue([this._mapId, sourcearray[id], selfswitchid], selfswitchvalue);
 				} else {
@@ -324,30 +316,3 @@ Game_Interpreter.prototype.controleventarray = function () {
 		};
 	};
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
