@@ -1,10 +1,10 @@
 /*:
- * @plugindesc Universal Remote Control
+ * @plugindesc Remote Event Count and Control
  * @author dahlys
  *
  * @help
  * ==============================================================================
- * Universal Remote Control
+ * Remote Event Count and Control
  * ============================================================================== 
  * 
  * Use: Count and Control events on the map. It is useful if you don't want 100
@@ -175,6 +175,7 @@
  */
  
  
+ 
 // Event Counting 
  
 Game_Interpreter.prototype.GetEventSubset = function () {
@@ -192,7 +193,7 @@ Game_Interpreter.prototype.GetEventSubset = function () {
 	var condition = names[names.length - 1];
 	for (var i = 0; i < names.length - 3; i++) {
 		for (var id = 1; id < 999; id++) {
-			if (typeof $dataMap.events[id] == "undefined") {
+			if ($dataMap.events[id] == null) {
 				break;
 			} else if ($dataMap.events[id].name.includes(names[i]) && eval(condition)) {
 				eventarray.push(id);
@@ -236,7 +237,7 @@ Game_Interpreter.prototype.controlevent = function () {
 	var condition = names[names.length - 1];
 	for (var i = 0; i < names.length - 3; i++) {
 		for (var id = 1; id < 999; id++) {
-			if (typeof $dataMap.events[id] == "undefined") {
+			if ($dataMap.events[id] == null) {
 				break;
 			} else if ($dataMap.events[id].name.includes(names[i]) && eval(condition)) {
 				if (isNaN(selfswitchid)) {
@@ -249,7 +250,7 @@ Game_Interpreter.prototype.controlevent = function () {
 	};
 };
 
-// Use array of event_id instead of searching all events typeof 
+// Use array of event_id instead of searching all events
 
 Game_Interpreter.prototype.counteventarray = function () {
 	var precheck = Array.prototype.slice.call(arguments);
@@ -267,7 +268,7 @@ Game_Interpreter.prototype.counteventarray = function () {
 	var sourcearray = $gameVariables.value(names[names.length - 2]);
 	for (var i = 0; i < names.length - 4; i++) {
 		for (var id = 0; id < sourcearray.length; id++) {
-			if ($dataMap.events[sourcearray[id]] == "undefined") {
+			if ($dataMap.events[sourcearray[id]] == null) {
 				break;
 			} else if ($dataMap.events[sourcearray[id]].name.includes(names[i]) && eval(condition)) {
 				eventarray.push(sourcearray[id]);
@@ -311,7 +312,7 @@ Game_Interpreter.prototype.controleventarray = function () {
 	var condition = names[names.length - 1];
 	for (var i = 0; i < names.length - 4; i++) {
 		for (var id = 0; id < sourcearray.length; id++) {
-			if ($dataMap.events[sourcearray[id]] == "undefined") {
+			if ($dataMap.events[sourcearray[id]] == null) {
 				break;
 			} else if ($dataMap.events[sourcearray[id]].name.includes(names[i]) && eval(condition)) {
 				if (isNaN(selfswitchid)) {
