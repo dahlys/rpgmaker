@@ -83,62 +83,62 @@
             Game_Interpreter.prototype.pluginCommand;
     Game_Interpreter.prototype.pluginCommand = function(command, args) {
         _Game_Interpreter_pluginCommand.call(this, command, args);
-	if (command === 'ArraytoInteger') {
-		array_to_integer.apply(this, args);
-	} else if (command === 'SearchCond') {
-		search_condition.apply(this, args);
+		if (command === 'ArraytoInteger') {
+			array_to_integer.apply(this, args);
+		} else if (command === 'SearchCond') {
+			search_condition.apply(this, args);
         } else if (command === 'SearchNames') {
-		search_name.apply(this, args);
+			search_name.apply(this, args);
         } else if (command === 'SearchNotes') {
-		search_note.apply(this, args);
+			search_note.apply(this, args);
         } else if (command === 'SearchSSw') { 
-		search_switch.apply(this, args); 
-	} else if (command === 'SearchHimeSV') { 
-		search_HimeSV.apply(this, args); 	
-	} else if (command === 'SearchYanflySV') { 
-		search_YanflySV.apply(this, args); 
-	} else if (command === 'SearchSSwName') { 
-		search_switch_name.apply(this, args);
-	} else if (command === 'SearchSSwNote') { 
-		search_switch_note.apply(this, args);
-	} else if (command === 'SearchYanflySVName') { 
-		search_YanflySV_name.apply(this, args);	
-	} else if (command === 'SearchYanflySVNote') { 
-		search_YanflySV_note.apply(this, args);
-	} else if (command === 'SearchHimeSVName') { 
-		search_HimeSV_name.apply(this, args);
-	} else if (command === 'SearchYanflySVName') { 
-		SearchHimeSVNote.apply(this, args);	
-	} else if (command === 'GetSSw') { 
-		get_swswitch.apply(this, args);
-	} else if (command === 'GetYanflySV') { 
-		get_YanflySV.apply(this, args);
-	} else if (command === 'GetHimeSV') { 
-		get_HimeSV.apply(this, args);
-	} else if (command === 'GetNames') { 
-		get_names.apply(this, args);	
-	} else if (command === 'GetNotes') { 
-		get_notes.apply(this, args);	
-	} else if (command === 'ssw') { 
-		set_swswitch_fast.apply(this, args);	
+			search_switch.apply(this, args); 
+		} else if (command === 'SearchHimeSV') { 
+			search_HimeSV.apply(this, args); 	
+		} else if (command === 'SearchYanflySV') { 
+			search_YanflySV.apply(this, args); 
+		} else if (command === 'SearchSSwName') { 
+			search_switch_name.apply(this, args);
+		} else if (command === 'SearchSSwNote') { 
+			search_switch_note.apply(this, args);
+		} else if (command === 'SearchYanflySVName') { 
+			search_YanflySV_name.apply(this, args);	
+		} else if (command === 'SearchYanflySVNote') { 
+			search_YanflySV_note.apply(this, args);
+		} else if (command === 'SearchHimeSVName') { 
+			search_HimeSV_name.apply(this, args);
+		} else if (command === 'SearchYanflySVName') { 
+			SearchHimeSVNote.apply(this, args);	
+		} else if (command === 'GetSSw') { 
+			get_swswitch.apply(this, args);
+		} else if (command === 'GetYanflySV') { 
+			get_YanflySV.apply(this, args);
+		} else if (command === 'GetHimeSV') { 
+			get_HimeSV.apply(this, args);
+		} else if (command === 'GetNames') { 
+			get_names.apply(this, args);	
+		} else if (command === 'GetNotes') { 
+			get_notes.apply(this, args);	
+		} else if (command === 'ssw') { 
+			set_swswitch_fast.apply(this, args);	
         } else if (command === 'SetSSw') { 
-		set_self_switch.apply(this, args);
-	} else if (command === 'SetHimeSV') { 
-		set_HimeSV.apply(this, args);
-	} else if (command === 'SetYanflySV') { 
-		set_YanflySV.apply(this, args);	
+			set_self_switch.apply(this, args);
+		} else if (command === 'SetHimeSV') { 
+			set_HimeSV.apply(this, args);
+		} else if (command === 'SetYanflySV') { 
+			set_YanflySV.apply(this, args);	
         } else if (command === 'NameSetSSw') {
-		set_self_switch_name.apply(this, args);
+			set_self_switch_name.apply(this, args);
         } else if (command === 'NoteSetSSw') { 
-		set_self_switch_note.apply(this, args);
-	} else if (command === 'NameSetHimeSV') {
-		set_HimeSV_name.apply(this, args);
+			set_self_switch_note.apply(this, args);
+		} else if (command === 'NameSetHimeSV') {
+			set_HimeSV_name.apply(this, args);
         } else if (command === 'NoteSetHimeSV') { 
-		set_HimeSV_note.apply(this, args);	
-	} else if (command === 'NameSetYanflySV') {
-		set_YanflySV_name.apply(this, args);
+			set_HimeSV_note.apply(this, args);	
+		} else if (command === 'NameSetYanflySV') {
+			set_YanflySV_name.apply(this, args);
         } else if (command === 'NoteSetYanflySV') { 
-		set_YanflySV_note.apply(this, args);	
+			set_YanflySV_note.apply(this, args);	
         }		
     };
 	
