@@ -24,41 +24,12 @@
  *  - Hime's self variables en masse.
  * 
  * ------------------------------------------------------------------------------
- * Contents
+ * How to Use
  * ------------------------------------------------------------------------------
  * 
- * 1. Search Engine
- *    1.1  Conditional Branch Search
- *    1.2  Search by Conditions
- *    1.3  Search by Event Names
- *    1.4  Search by Event Notes
- *    1.5  Search by Self Switches
- *    1.6  Search by Yanfly's Self Variables
- *    1.7  Search by Hime's Self Variables
- *    1.8  Search if Event Names X have Self Switch Y with Value Z
- *    1.9  Search if Event Notes X have Self Switch Y with Value Z
- *    1.10 Search if Event Names X have Yanfly Self Variable Y with Value Z
- *    1.11 Search if Event Notes X have Hime Self Variable Y with Value Z
+ * It's complicated. See webpage:
  *
- * 2. Get Values
- *    2.1 Get Single Default/Custom Self Switch Values and Use in Conditionals
- *    2.2 Get Values of Multiple Self Switches from 1 Event
- *    2.3 Get Values of Multiple Yanfly Self Variables from 1 Event
- *    2.4 Get Values of Multiple Hime Self Variables from 1 Event
- *    2.5 Get Namelist of All Events on Map, or from Source
- *    2.5 Get Notelist of All Events on Map, or from Source
- * 
- * 3. Remote Control
- *    3.1 Set Custom/Default Self Switches (The Even Lazier Way)
- *    3.2 Mass Set Self Switches
- *    3.3 Mass Set Yanfly's Self Variables
- *    3.4 Mass Set Hime's Self Variables
- *    3.5 Mass Set Self Switches by Event Names/Notes
- *    3.6 Mass Set Yanfly's Self Variables by Event Notes
- *    3.7 Mass Set Hime's Self Variables by Event Names
- * 
- * 3. Miscellaneous
- *    3.1 Array to Integer
+ * https://dahlys.000webhostapp.com/dahlysRemoteControl.html
  * 
  * ==============================================================================
  */
@@ -109,6 +80,8 @@
 			search_HimeSV_name.apply(this, args);
 		} else if (command === 'SearchYanflySVName') { 
 			SearchHimeSVNote.apply(this, args);	
+		} else if (command === 'get') { 
+			get_swswitch_fast.apply(this, args);	
 		} else if (command === 'GetSSw') { 
 			get_swswitch.apply(this, args);
 		} else if (command === 'GetYanflySV') { 
@@ -119,6 +92,18 @@
 			get_names.apply(this, args);	
 		} else if (command === 'GetNotes') { 
 			get_notes.apply(this, args);	
+		} else if (command === 'GetSSwNames') { 
+			get_ssw_names.apply(this, args);	
+		} else if (command === 'GetSSwNotes') { 
+			get_ssw_notes.apply(this, args);
+		} else if (command === 'GetYanflySVNames') { 
+			get_YanflySV_names.apply(this, args);	
+		} else if (command === 'GetYanflySVNotes') { 
+			get_YanflySV_notes.apply(this, args);	
+		} else if (command === 'GetHimeSVNames') { 
+			get_HimeSV_names.apply(this, args);	
+		} else if (command === 'GetHimeSVNotes') { 
+			get_HimeSV_notes.apply(this, args);	
 		} else if (command === 'ssw') { 
 			set_swswitch_fast.apply(this, args);	
         } else if (command === 'SetSSw') { 
@@ -222,6 +207,34 @@
 	
 	Game_Interpreter.prototype.GetNotes = function () {
 		return get_notes.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.GetSSwNames = function () {
+		return get_ssw_names.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.GetSSwNotes = function () {
+		return get_ssw_notes.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.GetYanflySVNames = function () {
+		return get_YanflySV_names.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.GetYanflySVNotes = function () {
+		return get_YanflySV_notes.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.GetHimeSVNames = function () {
+		return get_HimeSV_names.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.GetHimeSVNotes = function () {
+		return get_HimeSV_notes.apply(this, arguments);
+	};
+	
+	Game_Interpreter.prototype.ssw = function () { 
+		set_swswitch_fast.apply(this, arguments);
 	};
 	
 	Game_Interpreter.prototype.SetSelfSw = function () { 
@@ -350,7 +363,7 @@
 	};
 	
 	function array_to_integer() {
-		var storeNew = autoNumBoolFix.apply(this, arguments);
+		var storeNew = autoPlgCmdFix.apply(this, arguments);
 		var convertArray = $gameVariables.value(storeNew[0]);
 		if (Array.isArray(convertArray) && convertArray.length > 0) {
 			if (convertArray.length == 1 || storeNew.length == 1) {
@@ -370,7 +383,7 @@
 	function create_source_array(svstring) {
 		if (Array.isArray(svstring)) {
 			return svstring;
-		} else {
+		} else if (/S\d+/.test(svstring)) {
 		var regex = /(?:S)(\d+)/;
 		var sourcevariable = Number(regex.exec(svstring)[1]); 
 		if (sourcevariable == 0) {
@@ -410,7 +423,7 @@
 	};
 	
 	function get_mapId(string) {
-		if (string == "thisMap") {
+		if (string == "thisM") {
 			return $gameMap._mapId;
 		} else if (/M\d+/.test(string)) {
 			var regex = /(?:M)(\d+)/;
@@ -430,162 +443,115 @@
     FIX RAW INPUTS
 ---------------------------------------------------------------------------------
 */
+	// Fixes the strings from plugin command input to booleans, numbers, and arrays
+	
+	function autoPlgCmdFix() {
+		var args = Array.prototype.slice.call(arguments);
+		for (var i = args.length - 1; i >= 0; i--) {
+			if ( args[i] === "true" || args[i] === "false" || /^\[.*\]$/.test(args[i]) || /^\d+$/.test(args[i]) ) {
+				args[i] = JSON.parse(args[i]);
+			}
+		};
+		return args;
+	};
+	
+	/*
+	('Tom'^*) X
+	('Tom'^*, 1, 2, 'S0') X
+	('Tom'^*, 1, 2, 'cond'/bool) X
+	('Tom'^*, 1, 2, 'S0', 'cond'/bool) X
+
+	('Tom'^*, 1, 2) X
+	*/
 	
 	function autoSearchNFix() {
-		var args = Array.prototype.slice.call(arguments);
-		var position = 0;
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
-		if (args.length == 1 || (typeof args[args.length - 1] == "string" && typeof args[args.length - 2] == "string")) {
-			args.push(0);
-			args.push(0);
-			args.push("S0");
-			args.push(true);
-		} else if (typeof args[args.length - 1] == "number") {
-			args.push("S0");
-			args.push(true);
-		} else if (typeof args[args.length - 2] == "number") {
-			if (/S\d+/.test(args[args.length - 1])) {
+		var args = autoPlgCmdFix.apply(this, arguments);
+		if ( typeof args[args.length - 1] === "string" || ( Array.isArray(args[args.length - 1]) && typeof args[args.length - 1][0] === "string" ) || typeof args[args.length - 1] === "boolean" ) {
+			if ( /S\d+/.test(args[args.length - 1]) ) { // ('Tom'*, 1, 2, 'S0')
 				args.push(true);
-			} else {			
+			} else if ( typeof args[args.length - 2] == "number" ) { // ('Tom'*, 1, 2, 'cond')
 				args.splice(args.length - 1, 0, "S0");
-			}
-		}
+			} else if ( args.length === 1 || !/S\d+/.test(args[args.length - 2]) ) { // ('Tom'*)
+				args.push(0);
+				args.push(0);
+				args.push("S0");
+				args.push(true);
+			}			
+		} else { // ('Tom'*, 1, 2)
+			args.push("S0");
+			args.push(true);
+		};
 		return args;
 	};
-			
+	
+	/*
+	("A"^*) X
+	("A"^*, bool/string/obj*, 'thisMap'/'M3') X
+	("A"^*, bool/string/obj*, 'M3', 1, 2, 'S3') X
+	("A"^*, bool/string/obj*, 'M3', 1, 2, 'cond') X
+	("A"^*, bool/string/obj*, 'M3', 1, 2, s3, 'cond') X
+
+	("A"^*, bool/string/obj*) X
+	("A"^*, bool/string/obj*, 'M3', 1, 2, bool) X
+	("A"^*, bool/string/obj*, M3, 1, 2, s3, bool) X
+
+	("A"^*, bool/string/obj*, 'M3', 1, 2) X
+	("A"^*, bool/string/obj*, 1, 2) X
+	*/
+	
 	function autoSearchSwitchFix() {
-		var args = Array.prototype.slice.call(arguments);
-		var position = 0;
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
+		var args = autoPlgCmdFix.apply(this, arguments);
+		if ( typeof args[args.length - 1] === "string" || ( Array.isArray(args[args.length - 1]) && typeof args[args.length - 1][0] === "string" ) ) {
+			if ( /S\d+/.test(args[args.length - 1]) ) { // ("A", true, 'M3', 1, 2, 'S3')
+				args.push(true); 
+			} else if ( args[args.length - 1] === "thisM" || /M\d+/.test(args[args.length - 1]) ) { // ("A", true, 'thisM'/'M3')
+				args.push(0);
+				args.push(0);
+				args.push("S0");
+				args.push(true);
+			} else if ( args.length > 1 && typeof args[args.length - 2] === "number" ) {
+				args.splice(args.length - 1, 0, 'S0');
+			} else if ( args.length === 1 || !/S\d+/.test(args[args.length - 2]) ) { // ("A")
+				args.push(true);
+				args.push("thisM");
+				args.push(0);
+				args.push(0);
+				args.push("S0");
+				args.push(true);
 			}
-		}
-		if (args.length === 1 || (typeof args[args.length - 1] === "string" && typeof args[args.length - 2] === "string")) {
-			args.push(true);
-			args.push("thisMap");
+		} else if (typeof args[args.length - 1] === "number") { 
+			if (args[args.length - 3] === "thisM" || /M\d+/.test(args[args.length - 3])) { // ("A", true, 'M3', 1, 2)
+				args.push("S0");
+				args.push(true);
+			} else { // ("A", true, 1, 2)
+				args.splice(args.length - 2, 0, "thisM");
+				args.push("S0");
+				args.push(true);
+			}
+		} else if ( typeof args[args.length - 2] === "number" ) {	
+			args.splice(args.length - 1, 0, 'S0');
+		} else if ( !/S\d+/.test(args[args.length - 2]) ) { // ("A", true)
+			args.push("thisM");
 			args.push(0);
 			args.push(0);
 			args.push("S0");
 			args.push(true);
-		} else if (args.length === 2 || (typeof args[args.length - 2] === "string" && typeof args[args.length - 3] === "string")) {
-			args.push("thisMap");
-			args.push(0);
-			args.push(0);
-			args.push("S0");
-			args.push(true);
-		} else if (args[args.length - 1] === "thisMap" || /M\d+/.test(args[args.length - 1])) {
-			args.push(0);
-			args.push(0);
-			args.push("S0");
-			args.push(true);
-		} else if (typeof args[args.length - 1] === "number") {
-			if (args[args.length - 3] === "thisMap" || /M\d+/.test(args[args.length - 3])) {
-				args.push("S0");
-				args.push(true);
-			} else if (typeof args[args.length - 3] === "boolean") {
-				args.splice(args.length - 2, 0, "thisMap");
-				args.push("S0");
-				args.push(true);
-			} else {
-				args.splice(args.length - 2, 0, true, "thisMap");
-				args.push("S0");
-				args.push(true);
-			}
-		} else if (typeof args[args.length - 2] === "number") {
-			if (/S\d+/.test(args[args.length - 1])) {
-				args.push(true);
-			} else {			
-				args.splice(args.length - 1, 0, "S0");
-			}
-		};
+		}; 
 		return args;
 	};
 	
-	function autoNumBoolFix() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
-		return args;
-	};
+	/*
+	('Tom'*, 'A'*, bool/string/obj*, 1, 2, 'S0', 'cond'/bool)
+	('Tom'*, 'A'*, bool/string/obj*, 1, 2, 'S0')
+	('Tom'*, 'A'*, bool/string/obj*, 1, 2, 'cond'/bool)
+	('Tom'*, 'A'*, bool/string/obj*, 1, 2)
+	('Tom'*, 'A'*, 1, 2)
+	('Tom'*, 'A'*, bool/string/obj*)
+	('Tom'*, 'A'*)
+	*/
 	
-	function autoSetSSwFix() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
-		if (args.length == 1) {
-			args.push(true);
-			args.push(this._eventId);
-			args.push("thisMap");
-			args.push(true);
-		} else if (args.length == 2) {
-			args.push(this._eventId);
-			args.push("thisMap");
-			args.push(true);
-		} else if (args.length == 3) {
-			args.push("thisMap");
-			args.push(true);
-		} else if (args.length == 4) {
-			args.push(true);
-		};
-		if (args[2] == "thisEvent") {
-			args[2] = this._eventId;
-		};
-		return args;
-	};
-	
-	function autoGetSSwFastFix() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
-		if (args.length == 1) {
-			args.push(this._eventId);
-			args.push("thisMap");
-			args.push(true);
-		} else if (args.length == 2) {
-			args.push("thisMap");
-			args.push(true);
-		} else if (args.length == 3) {
-			args.push(true);
-		};
-		if (args[1] == "thisEvent") {
-			args[1] = this._eventId;
-		};
-		return args;
-	};
-				
 	function autoSearchSwNFix() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
+		var args = autoPlgCmdFix.apply(this, arguments);
 		if (args.length == 2) {
 			args.push(true);
 			args.push(0);
@@ -608,74 +574,166 @@
 			if (/S\d+/.test(args[args.length - 1])) {
 				args.push(true);
 			} else {
-				args.splice(3, 0, "S0");
+				args.splice(5, 0, "S0");
 			}			
 		}
 		return args;
 	};
 	
-	function autoGetN() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
-		if (args.length == 0) {
-			args.push("S0");
+	/*
+	('A', 'thisE'/eidNum, 'thisM', 'cond'/bool)
+	('A', 'thisE'/eidNum, 'thisM')
+	('A', 'thisE'/eidNum)
+	('A')
+	*/
+	
+	function autoGetSSwFastFix() {
+		var args = autoPlgCmdFix.apply(this, arguments);
+		if (args.length == 1) {
+			args.push(this._eventId);
+			args.push("thisM");
 			args.push(true);
-		} else if (args.length == 1) {
-			if (/S\d+/.test(args[0])) {
-				args.push(true);
-			} else {
-				args.splice(0, 0, "S0");
-			}
-		}
+		} else if (args.length == 2) {
+			args.push("thisM");
+			args.push(true);
+		} else if (args.length == 3) {
+			args.push(true);
+		};
+		if (args[1] == "thisE") {
+			args[1] = this._eventId;
+		};
 		return args;
 	};
 	
+	/*
+	('A'*, 1, 2, 'thisE'/eidNum*, 'thisM'*, 'cond'/bool)
+	('A'*, 1, 2, 'thisE'/eidNum*, 'thisM'*)
+	('A'*, 1, 2, 'thisE'/eidNum*)
+	('A'*, 1, 2)
+	('A'*)
+	*/
+	
 	function autoGetSSwFix() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
-			}
-		}
+		var args = autoPlgCmdFix.apply(this, arguments);
 		if (args.length == 1) {
 			args.push(0);
 			args.push(0);
 			args.push(this._eventId);
-			args.push("thisMap");
+			args.push("thisM");
 			args.push(true);
 		} else if (args.length == 3) {
 			args.push(this._eventId);
-			args.push("thisMap");
+			args.push("thisM");
 			args.push(true);
 		} else if (args.length == 4) {
-			args.push("thisMap");
+			args.push("thisM");
 			args.push(true);
 		} else if (args.length == 5) {
 			args.push(true);
 		}
-		if (args[3] == "thisEvent") {
+		if (args[3] == "thisE") {
 			args[3] = this._eventId;
 		}
 		return args;
 	};
 	
-	function autoSSwNFix() {
-		var args = Array.prototype.slice.call(arguments);
-		for (var i = args.length - 1; i >= 0; i--) {
-			if (typeof args[i] == "boolean" || args[i] === "true" || args[i] === "false") {
-				args[i] = JSON.parse(args[i]);
-			} else if (!Array.isArray(args[i]) && Number(args[i]) > 0) {
-				args[i] = Number(args[i]);
+	/*
+	(1, 2, 'S0', 'cond')
+	(1, 2, 'S0')
+	(1, 2, 'cond')
+	(1, 2)
+	()
+	*/
+	
+	function autoGetN() {
+		var args = autoPlgCmdFix.apply(this, arguments);
+		if (args.length == 0) {
+			args.push(0);
+			args.push(0);
+			args.push("S0");
+			args.push(true);
+		} else if ( args.length == 2 ) {
+			args.push("S0");
+			args.push(true);
+		} else if (args.length == 3) {
+			if (/S\d+/.test(args[0])) {
+				args.push(true);
+			} else {
+				args.splice(2, 0, "S0");
 			}
 		}
+		return args;
+	};
+	
+	/*
+	('Tom'*, 'A'*, 1, 2, 'S0', 'cond')
+	('Tom'*, 'A'*, 1, 2, 'S0')
+	('Tom'*, 'A'*, 1, 2, cond')
+	('Tom'*, 'A'*, 1, 2)
+	('Tom'*, 'A'*)
+	*/
+	
+	function autoGetSSVN() {
+		args = autoPlgCmdFix.apply(this, arguments);
+		if ( args.length === 2 ) {
+			args.push(0);
+			args.push(0);
+			args.push('S0');
+			args.push(true);
+		} else if ( args.length === 4 ){
+			args.push('S0');
+			args.push(true);
+		} else if ( args.length === 5 ) {
+			if (/S\d+/.test(args[2])) {
+				args.push(true);
+			} else {
+				args.splice(4, 0, "S0");
+			}
+		}
+	}
+		
+	/*
+	('A'*, bool/string/obj*, 'thisE'/eidNum*, 'thisM'/'M1'*, 'cond'/bool)
+	('A'*, bool/string/obj*, 'thisE'/eidNum*, 'thisM'/'M1'*)
+	('A'*, bool/string/obj*, 'thisE'/eidNum*)
+	('A'*, bool/string/obj*)
+	('A'*)
+	*/
+		
+	function autoSetSSwFix() {
+		var args = autoPlgCmdFix.apply(this, arguments);
+		if (args.length == 1) {
+			args.push(true);
+			args.push(this._eventId);
+			args.push("thisM");
+			args.push(true);
+		} else if (args.length == 2) {
+			args.push(this._eventId);
+			args.push("thisM");
+			args.push(true);
+		} else if (args.length == 3) {
+			args.push("thisM");
+			args.push(true);
+		} else if (args.length == 4) {
+			args.push(true);
+		};
+		args[3] = get_mapId(args[3]);
+		if (args[2] == "thisE") {
+			args[2] = this._eventId;
+		};
+		return args;
+	};
+	
+	/*
+	('Tom'*, 'A'*, bool/string/obj*, 'S0', 'cond'/bool)
+	('Tom'*, 'A'*, bool/string/obj*, 'S0')
+	('Tom'*, 'A'*, bool/string/obj*,'cond'/bool)
+	('Tom'*, 'A'*, bool/string/obj*)
+	('Tom'*, 'A'*)
+	*/
+	
+	function autoSSwNFix() {
+		var args = autoPlgCmdFix.apply(this, arguments);
 		if (args.length == 2) {
 			args.push(true);
 			args.push("S0");
@@ -700,13 +758,20 @@
 */
 	
 	function search_condition() {
-		var args = autoSearchNFix.apply(this, arguments);
+		var args = Array.prototype.slice.call(arguments);
+		if (args.length == 1) {
+			args.push(0);
+			args.push(0);
+			args.push("S0");
+		} else if (args.length == 3) {
+			args.push("S0");
+		}
 		var counted = [];
-		var condition = args[3];
-		var sourcestring = args[2];
+		var condition = args[0];
+		var sourcestring = args[3];
 		var sourcearray = create_source_array(sourcestring);
-		var countedId = args[1];
-		var countedNum = args[0];
+		var countedId = args[2];
+		var countedNum = args[1];
 		var eventId = 0;
 		for (var i = 0; i < sourcearray.length; i++) {
 			eventId = sourcearray[i];
@@ -817,8 +882,10 @@
 		for (var i = 0; i < args.length - 6; i++) {
 			for (var k = 0; k < sourcearray.length; k++) {
 				eventId = sourcearray[k];
-				if ($gameSelfVariables.value(mapId, eventId, args[i]) == value && eval(condition)) {
+				if ( Array.isArray(value) && $gameSelfVariables.value(mapId, eventId, args[i]) == value[i] && eval(condition) ) {
 					counted.push(eventId);
+				} else if ( $gameSelfVariables.value(mapId, eventId, args[i]) == value && eval(condition) ) {
+					counted.push(eventId);		
 				}
 			}
 		}
@@ -842,8 +909,10 @@
 		for (var j = 0; j < args.length - 6; j++) {
 			for (var k = 0; k < sourcearray.length; k++) {
 				eventId = sourcearray[k];
-				if ($gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + args[j]]) == value && eval(condition)) {
+				if ( Array.isArray(value) && $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + args[j]]) == value[j] && eval(condition) ) {
 					counted.push(eventId);
+				} else if ( $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + args[j]]) == value && eval(condition) ) {
+					counted.push(eventId);		
 				}
 			}
 		};
@@ -860,42 +929,42 @@
 	function search_switch_name() {
 		var args = autoSearchSwNFix.apply(this, arguments);
 		var eventId = search_name(args[0], 0, 0, args[5], true);
-		var counted =  search_switch(args[1], args[2], "thisMap", args[3], args[4], eventId, args[6]);
+		var counted =  search_switch(args[1], args[2], "thisM", args[3], args[4], eventId, args[6]);
 		return counted;
 	};
 	
 	function search_switch_note() {
 		var args = autoSearchSwNFix.apply(this, arguments);
 		var eventId = search_note(args[0], 0, 0, args[5], true);
-		var counted =  search_switch(args[1], args[2], "thisMap", args[3], args[4], eventId, args[6]);
+		var counted =  search_switch(args[1], args[2], "thisM", args[3], args[4], eventId, args[6]);
 		return counted;	
 	};
 	
 	function search_HimeSV_name() {
 		var args = autoSearchSwNFix.apply(this, arguments);
 		var eventId = search_name(args[0], 0, 0, args[5], true);
-		var counted =  search_HimeSV(args[1], args[2], "thisMap", args[3], args[4], eventId, args[6]);
+		var counted =  search_HimeSV(args[1], args[2], "thisM", args[3], args[4], eventId, args[6]);
 		return counted;	
 	};
 	
 	function search_HimeSV_note() {
 		var args = autoSearchSwNFix.apply(this, arguments);
 		var eventId = search_note(args[0], 0, 0, args[5], true);
-		var counted =  search_HimeSV(args[1], args[2], "thisMap", args[3], args[4], eventId, args[6]);
+		var counted =  search_HimeSV(args[1], args[2], "thisM", args[3], args[4], eventId, args[6]);
 		return counted;	
 	};
 	
 	function search_YanflySV_name() {
 		var args = autoSearchSwNFix.apply(this, arguments);
 		var eventId = search_name(args[0], 0, 0, args[5], true); 
-		var counted =  search_YanflySV(args[1], args[2], "thisMap", args[3], args[4], eventId, args[6]);
+		var counted =  search_YanflySV(args[1], args[2], "thisM", args[3], args[4], eventId, args[6]);
 		return counted;	
 	};
 	
 	function search_YanflySV_note() {
 		var args = autoSearchSwNFix.apply(this, arguments);
 		var eventId = search_note(args[0], 0, 0, args[5], true);
-		var counted =  search_YanflySV(args[1], args[2], "thisMap", args[3], args[4], eventId, args[6]);
+		var counted =  search_YanflySV(args[1], args[2], "thisM", args[3], args[4], eventId, args[6]);
 		return counted;	
 	};
 		
@@ -935,9 +1004,49 @@
 				if (typeof switchName[i] == "number") {
 					switchName[i] = 'SELF SWITCH ' + switchName[i];
 				}
-				result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
 			}
+		} else if ( typeof switchName == "number" ) {
+			switchName = 'SELF SWITCH ' + switchName;
 		}
+		if ( eval(cond) ) {
+			if ( Array.isArray(switchName) ) {
+				if ( Array.isArray(eventId) ) {
+					if ( Array.isArray(mapId) ) {
+						for ( var i = 0; i < switchName.length; i++ ) {
+							result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName[i]]));
+						}
+					} else {
+						for ( var i = 0; i < switchName.length; i++ ) {
+							result.push($gameSelfSwitches.value([mapId, eventId[i], switchName[i]]));
+						}
+					}					
+				} else if ( Array.isArray(mapId) ) {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId[i], eventId, switchName[i]]));
+					}
+				} else {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
+					}
+				}
+			} else if ( Array.isArray(eventId) ) {
+				if ( Array.isArray(mapId) ) {
+					for ( var i = 0; i < eventId.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName]));
+					}
+				} else {
+					for ( var i = 0; i < eventId.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId, eventId[i], switchName]));
+					}
+				}
+			} else if ( Array.isArray(mapId) ) {
+				for ( var i = 0; i < mapId.length; i++ ) {
+					result.push($gameSelfSwitches.value([mapId[i], eventId, switchName]));
+				}
+			} else {
+				result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
+			}
+		};
 		counted_variables(result, countedNum, countedId);
 		return result;
 	};
@@ -956,9 +1065,49 @@
 				if (typeof switchName[i] == "number") {
 					switchName[i] = 'SELF VARIABLE ' + switchName[i];
 				}
-				result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
 			}
-		} 
+		} else if ( typeof switchName == "number" ) {
+			switchName = 'SELF VARIABLE ' + switchName;
+		};
+		if ( eval(cond) ) {
+			if ( Array.isArray(switchName) ) {
+				if ( Array.isArray(eventId) ) {
+					if ( Array.isArray(mapId) ) {
+						for ( var i = 0; i < switchName.length; i++ ) {
+							result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName[i]]));
+						}
+					} else {
+						for ( var i = 0; i < switchName.length; i++ ) {
+							result.push($gameSelfSwitches.value([mapId, eventId[i], switchName[i]]));
+						}
+					}					
+				} else if ( Array.isArray(mapId) ) {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId[i], eventId, switchName[i]]));
+					}
+				} else {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
+					}
+				}
+			} else if ( Array.isArray(eventId) ) {
+				if ( Array.isArray(mapId) ) {
+					for ( var i = 0; i < eventId.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName]));
+					}
+				} else {
+					for ( var i = 0; i < eventId.length; i++ ) {
+						result.push($gameSelfSwitches.value([mapId, eventId[i], switchName]));
+					}
+				}
+			} else if ( Array.isArray(mapId) ) {
+				for ( var i = 0; i < mapId.length; i++ ) {
+					result.push($gameSelfSwitches.value([mapId[i], eventId, switchName]));
+				}
+			} else {
+				result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
+			}
+		};
 		counted_variables(result, countedNum, countedId);
 		return result;
 	};
@@ -972,48 +1121,146 @@
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
-		if (Array.isArray(switchName)) {
-			for (var i = 0; i < switchName.length; i++) {
-				result.push($gameSelfVariables.value(mapId, eventId, switchName[i]));
+		if ( eval(cond) ) {
+			if ( Array.isArray(switchName) ) {
+				if ( Array.isArray(eventId) ) {
+					if ( Array.isArray(mapId) ) {
+						for ( var i = 0; i < switchName.length; i++ ) {
+							result.push($gameSelfVariables.value([mapId[i], eventId[i], switchName[i]]));
+						}
+					} else {
+						for ( var i = 0; i < switchName.length; i++ ) {
+							result.push($gameSelfVariables.value([mapId, eventId[i], switchName[i]]));
+						}
+					}					
+				} else if ( Array.isArray(mapId) ) {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfVariables.value([mapId[i], eventId, switchName[i]]));
+					}
+				} else {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfVariables.value([mapId, eventId, switchName[i]]));
+					}
+				}
+			} else if ( Array.isArray(eventId) ) {
+				if ( Array.isArray(mapId) ) {
+					for ( var i = 0; i < eventId.length; i++ ) {
+						result.push($gameSelfVariables.value([mapId[i], eventId[i], switchName]));
+					}
+				} else {
+					for ( var i = 0; i < eventId.length; i++ ) {
+						result.push($gameSelfVariables.value([mapId, eventId[i], switchName]));
+					}
+				}
+			} else if ( Array.isArray(mapId) ) {
+				for ( var i = 0; i < mapId.length; i++ ) {
+					result.push($gameSelfVariables.value([mapId[i], eventId, switchName]));
+				}
+			} else {
+				result.push($gameSelfVariables.value([mapId, eventId, switchName]));
 			}
-		} 
+		}; 
 		counted_variables(result, countedNum, countedId);
 		return result;
 	};
 		
 	function get_names() {
 		var args = autoGetN.apply(this, arguments);
-		var sourcearray = create_source_array(args[0]);
-		var cond = args[1];
+		var countedId = args[1];
+		var countedNum = args[0];
+		var sourcearray = create_source_array(args[2]);
+		var cond = args[3];
 		var namelist = [];
 		for (var i = 0; i < sourcearray.length; i++) {
 			var eventId = sourcearray[i];
 			if (eval(cond)) {
 				namelist.push($dataMap.events[eventId].name);
 			}
-		}
+		};
+		counted_variables(namelist, countedNum, countedId);
 		return namelist;
 	};
 	
 	function get_notes() {
 		var args = autoGetN.apply(this, arguments);
-		var sourcearray = create_source_array(args[0]);
-		var cond = args[1];
+		var countedId = args[1];
+		var countedNum = args[0];
+		var sourcearray = create_source_array(args[2]);
+		var cond = args[3];
 		var notelist = [];
 		for (var i = 0; i < sourcearray.length; i++) {
 			var eventId = sourcearray[i];
 			if (eval(cond)) {
-				if ($dataMap.events[eventId].note) {
-					notelist.push($dataMap.events[eventId].note);
-				}
+				notelist.push($dataMap.events[eventId].note);
 			}
-		}
+		};
+		counted_variables(notelist, countedNum, countedId);
 		return notelist;
+	};
+
+/* 
+---------------------------------------------------------------------------------
+    GET SELF SWITCH/VARIABLES USING NAMES/NOTES
+---------------------------------------------------------------------------------
+*/
+	
+	function get_ssw_names() {
+		var args = autoGetSSVN.apply(this, arguments);
+		var eventId = search_name(args[0], 0, 0, args[4], true);
+		var result = [];
+		for ( var i = 0; i < eventId.length; i++ ) {
+			result.push(get_swswitch(args[1], args[2], args[3], eventId[i], "thisM", args[5]));
+		};
+	};
+	
+	function get_ssw_notes() {
+		var args = autoGetSSVN.apply(this, arguments);
+		var eventId = search_note(args[0], 0, 0, args[4], true);
+		var result = [];
+		for ( var i = 0; i < eventId.length; i++ ) {
+			result.push(get_swswitch(args[1], args[2], args[3], eventId[i], "thisM", args[5]));
+		};
+	};
+	
+	function get_YanflySV_names() {
+		var args = autoGetSSVN.apply(this, arguments);
+		var eventId = search_name(args[0], 0, 0, args[4], true);
+		var result = [];
+		for ( var i = 0; i < eventId.length; i++ ) {
+			result.push(get_YanflySV(args[1], args[2], args[3], eventId[i], "thisM", args[5]));
+		};
+	};
+	
+	function get_YanflySV_notes() {
+		var args = autoGetSSVN.apply(this, arguments);
+		var eventId = search_note(args[0], 0, 0, args[4], true);
+		var result = [];
+		for ( var i = 0; i < eventId.length; i++ ) {
+			result.push(get_YanflySV(args[1], args[2], args[3], eventId[i], "thisM", args[5]));
+		};
+	};
+	
+	function get_HimeSV_names() {
+		var args = autoGetSSVN.apply(this, arguments);
+		var eventId = search_name(args[0], 0, 0, args[4], true);
+		var result = [];
+		for ( var i = 0; i < eventId.length; i++ ) {
+			result.push(get_HimeSV(args[1], args[2], args[3], eventId[i], "thisM", args[5]));
+		};
+	};
+	
+	function get_HimeSV_notes() {
+		var args = autoGetSSVN.apply(this, arguments);
+		var eventId = search_note(args[0], 0, 0, args[4], true);
+		var result = [];
+		for ( var i = 0; i < eventId.length; i++ ) {
+			result.push(get_HimeSV(args[1], args[2], args[3], eventId[i], "thisM", args[5]));
+		};
 	};
 	
 /* 
 ---------------------------------------------------------------------------------
-    SET SWITCHES & VARIABLES
+    MASS SET SWITCHES & VARIABLES
 ---------------------------------------------------------------------------------
 */
 
@@ -1113,8 +1360,6 @@
 		
 	};
 		
-	// For Hime's Self Variables
-	
 	function set_HimeSV(){
 		var args = autoSetSSwFix.apply(this, arguments);
 		var switchName = args[0];
@@ -1186,8 +1431,6 @@
 		
 	};	
 	
-	// For Yanfly's Self Variables
-	
 	function set_YanflySV(){
 		var args = autoSetSSwFix.apply(this, arguments);
 		var switchName = args[0];
@@ -1196,8 +1439,8 @@
 		var mapPoint = args[3];
 		var mapId = get_mapId(mapPoint);
 		var cond = args[4];
-		var SnIsArray = Array.isArray(switchName);
-		var valueIsArray = Array.isArray(value);
+		var SnIsArray = Array.isArray(switchName); console.log(SnIsArray);
+		var valueIsArray = Array.isArray(value); console.log(valueIsArray);
 		var eIdIsArray = Array.isArray(eventId);
 		var mIdIsArray = Array.isArray(mapId); 
 		if (SnIsArray) {
@@ -1221,7 +1464,7 @@
 					} else if (mIdIsArray) {
 						$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
 					} else {
-						$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]);
+						$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]); console.log(switchName[i] + " " + value[i]);
 					}
 				} else if (eIdIsArray && eval(cond)) {
 					if (mIdIsArray) {
@@ -1270,44 +1513,56 @@
 	
 /* 
 ---------------------------------------------------------------------------------
-    SET SWITCHES & VARIABLES BY NAME/NOTE
+    MASS SET SWITCHES & VARIABLES BY NAME/NOTE
 ---------------------------------------------------------------------------------
 */
 	
 	function set_self_switch_name(){
 		var args = autoSSwNFix.apply(this, arguments);
-		eventId = search_name(args[0], 0, 0, args[3], true);
-		set_self_switch(args[1], args[2], eventId, "thisMap", args[4]);
+		var eventId = search_name(args[0], 0, 0, args[3], true);
+		for ( var i = 0; i < eventId.length; i++ ) {
+			set_self_switch(args[1], args[2], eventId[i], "thisM", args[4]);
+		};		
 	};
 
 	function set_self_switch_note(){
 		var args = autoSSwNFix.apply(this, arguments);
-		eventId = search_note(args[0], 0, 0, args[3], true);
-		set_self_switch(args[1], args[2], eventId, "thisMap", args[4]);
+		var eventId = search_note(args[0], 0, 0, args[3], true);
+		for ( var i = 0; i < eventId.length; i++ ) {
+			set_self_switch(args[1], args[2], eventId[i], "thisM", args[4]);
+		};	
 	};
 	
 	function set_HimeSV_name(){
 		var args = autoSSwNFix.apply(this, arguments);
-		eventId = search_name(args[0], 0, 0, args[3], true);
-		set_HimeSV(args[1], args[2], eventId, "thisMap", args[4]);
+		var eventId = search_name(args[0], 0, 0, args[3], true);
+		for ( var i = 0; i < eventId.length; i++ ) {
+			set_HimeSV(args[1], args[2], eventId[i], "thisM", args[4]);
+		};
 	};
 
 	function set_HimeSV_note(){
 		var args = autoSSwNFix.apply(this, arguments);
-		eventId = search_note(args[0], 0, 0, args[3], true);
-		set_HimeSV(args[1], args[2], eventId, "thisMap", args[4]);
+		var eventId = search_note(args[0], 0, 0, args[3], true);
+		for ( var i = 0; i < eventId.length; i++ ) {
+			set_HimeSV(args[1], args[2], eventId[i], "thisM", args[4]);
+		};
 	};
 	
 	function set_YanflySV_name(){
 		var args = autoSSwNFix.apply(this, arguments);
-		eventId = search_name(args[0], 0, 0, args[3], true);
-		set_YanflySV(args[1], args[2], eventId, "thisMap", args[4]);
+		var eventId = search_name(args[0], 0, 0, args[3], true);
+		for ( var i = 0; i < eventId.length; i++ ) {
+			set_YanflySV(args[1], args[2], eventId[i], "thisM", args[4]);
+		};
 	};
 
 	function set_YanflySV_note(){
 		var args = autoSSwNFix.apply(this, arguments);
-		eventId = search_note(args[0], 0, 0, args[3], true);
-		set_YanflySV(args[1], args[2], eventId, "thisMap", args[4]);
+		var eventId = search_note(args[0], 0, 0, args[3], true);
+		for ( var i = 0; i < eventId.length; i++ ) {
+			set_YanflySV(args[1], args[2], eventId[i], "thisM", args[4]);
+		};
 	};
 
 /* 
@@ -1345,10 +1600,28 @@ function Search() {};
 	// Search if Self Switch X is ON/OFF/value in any Map from Source with Condition
 	Search.SelfSw = function(swName, value, mapId, source, cond) {
 		if (typeof value === 'undefined') { value = true; };
-		if (typeof mapId === 'undefined') { mapId = "thisMap"; };
+		if (typeof mapId === 'undefined') { mapId = "thisM"; };
 		if (typeof source === 'undefined') { source = "S0"; };
 		if (typeof cond === 'undefined') { cond = true; }; 
 		if ($gameTemp.SearchSSw(swName, value, mapId, 0, 0, source, cond).length > 0) { return true; }
+		return false;
+	};
+	
+	// Search if Hime Self Variable X is Y in any Map from Source with Condition
+	Search.HimeSV = function(swName, value, mapId, source, cond) {
+		if (typeof mapId === 'undefined') { mapId = "thisM"; };
+		if (typeof source === 'undefined') { source = "S0"; };
+		if (typeof cond === 'undefined') { cond = true; };
+		if ($gameTemp.SearchHimeSV(swName, value, mapId, 0, 0, source, cond).length > 0) { return true; }
+		return false;
+	};	
+	
+	// Search if Yanfly Self Variable X is Y in any Map from Source with Condition
+	Search.YanflySV = function(swName, value, mapId, source, cond) {
+		if (typeof mapId === 'undefined') { mapId = "thisM"; };
+		if (typeof source === 'undefined') { source = "S0"; };
+		if (typeof cond === 'undefined') { cond = true; };
+		if ($gameTemp.SearchYanflySV(swName, value, mapId, 0, 0, source, cond).length > 0) { return true; }
 		return false;
 	};
 	
@@ -1370,26 +1643,6 @@ function Search() {};
 		return false;		
 	};
 	
-	// Search if Hime Self Variable X is Y in any Map from Source with Condition
-	Search.HimeSV = function(swName, value, mapId, source, cond) {
-		if (typeof value === 'undefined') { value = true; };
-		if (typeof mapId === 'undefined') { mapId = "thisMap"; };
-		if (typeof source === 'undefined') { source = "S0"; };
-		if (typeof cond === 'undefined') { cond = true; };
-		if ($gameTemp.SearchHimeSV(swName, value, mapId, 0, 0, source, cond).length > 0) { return true; }
-		return false;
-	};	
-	
-	// Search if Yanfly Self Variable X is Y in any Map from Source with Condition
-	Search.YanflySV = function(swName, value, mapId, source, cond) {
-		if (typeof value === 'undefined') { value = true; };
-		if (typeof mapId === 'undefined') { mapId = "thisMap"; };
-		if (typeof source === 'undefined') { source = "S0"; };
-		if (typeof cond === 'undefined') { cond = true; };
-		if ($gameTemp.SearchYanflySV(swName, value, mapId, 0, 0, source, cond).length > 0) { return true; }
-		return false;
-	};
-
 	// Search if Event Name has Yanfly Self Variable X of value Y in Map from Source with Condition
 	Search.YanflySVName = function(eName, swName, value, source, cond) {
 		if (typeof source === 'undefined') { source = "S0"; };
@@ -1398,10 +1651,26 @@ function Search() {};
 		return false;		
 	};
 	
+	// Search if Event Note has Yanfly Self Variable X of value Y in Map from Source with Condition
+	Search.YanflySVNote = function(eNote, swName, value, source, cond) { 
+		if (typeof source === 'undefined') { source = "S0"; };
+		if (typeof cond === 'undefined') { cond = true; };
+		if ($gameTemp.SearchYanflySVNote(eNote, swName, value, 0, 0, source, cond).length > 0) { return true; }
+		return false;		
+	};
+	
 	// Search if Event Name has Hime Self Variable X of value Y in Map from Source with Condition
 	Search.HimeSVName = function(eName, swName, value, source, cond) {
 		if (typeof source === 'undefined') { source = "S0"; };
 		if (typeof cond === 'undefined') { cond = true; };
 		if ($gameTemp.SearchHimeSVName(eName, swName, value, 0, 0, source, cond).length > 0) { return true; }
+		return false;		
+	};
+	
+	// Search if Event Note has Hime Self Variable X of value Y in Map from Source with Condition
+	Search.HimeSVNote = function(eNote, swName, value, source, cond) { 
+		if (typeof source === 'undefined') { source = "S0"; };
+		if (typeof cond === 'undefined') { cond = true; };
+		if ($gameTemp.SearchHimeSVNote(eNote, swName, value, 0, 0, source, cond).length > 0) { return true; }
 		return false;		
 	};
