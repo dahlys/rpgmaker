@@ -1278,12 +1278,12 @@
 			$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
 		}
 	};
-		
+	
 	function set_self_switch(){
 		var args = autoSetSSwFix.apply(this, arguments);
 		var switchName = args[0];
 		var value = args[1];
-		var eventId = args[2];
+		var eventId = create_source_array(args[2]);
 		var mapPoint = args[3];
 		var mapId = get_mapId(mapPoint);
 		var cond = args[4];
@@ -1364,7 +1364,7 @@
 		var args = autoSetSSwFix.apply(this, arguments);
 		var switchName = args[0];
 		var value = args[1];
-		var eventId = args[2];
+		var eventId = create_source_array(args[2]);
 		var mapId = args[3];
 		var cond = args[4];
 		var SnIsArray = Array.isArray(switchName);
@@ -1435,7 +1435,7 @@
 		var args = autoSetSSwFix.apply(this, arguments);
 		var switchName = args[0];
 		var value = args[1];
-		var eventId = args[2];
+		var eventId = create_source_array(args[2]);
 		var mapPoint = args[3];
 		var mapId = get_mapId(mapPoint);
 		var cond = args[4];
