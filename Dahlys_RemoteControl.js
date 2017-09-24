@@ -995,7 +995,7 @@
 		var switchName = args[0];
 		var countedId = args[2];
 		var countedNum = args[1];
-		var eventId = args[3];
+		var eventId = create_source_array(args[3]);
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
@@ -1056,7 +1056,7 @@
 		var switchName = args[0];
 		var countedId = args[2];
 		var countedNum = args[1];
-		var eventId = args[3];
+		var eventId = create_source_array(args[3]);
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
@@ -1117,7 +1117,7 @@
 		var switchName = args[0];
 		var countedId = args[2];
 		var countedNum = args[1];
-		var eventId = args[3];
+		var eventId = create_source_array(args[3]);
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
