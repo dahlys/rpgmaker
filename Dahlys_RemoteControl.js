@@ -237,7 +237,7 @@
 		set_swswitch_fast.apply(this, arguments);
 	};
 	
-	Game_Interpreter.prototype.SetSelfSw = function () { 
+	Game_Interpreter.prototype.SetSSw = function () { 
 		set_self_switch.apply(this, arguments);
 	};	
 	
@@ -249,11 +249,11 @@
 		set_YanflySV.apply(this, arguments);
 	};
 	
-	Game_Interpreter.prototype.NameSetSelfSw = function () { 
+	Game_Interpreter.prototype.NameSetSSw = function () { 
 		set_self_switch_name.apply(this, arguments);
 	};
 	
-	Game_Interpreter.prototype.NoteSetSelfSw = function () { 
+	Game_Interpreter.prototype.NoteSetSSw = function () { 
 		set_self_switch_note.apply(this, arguments);
 	};
 	
