@@ -382,7 +382,11 @@
 	
 	function create_source_array(svstring) {
 		if (Array.isArray(svstring)) {
-			return svstring;
+			if (svstring.length === 1) {
+				return svstring[0];
+			} else {
+				return svstring;
+			}
 		} else if (/S\d+/.test(svstring)) {
 		var regex = /(?:S)(\d+)/;
 		var sourcevariable = Number(regex.exec(svstring)[1]); 
@@ -397,6 +401,8 @@
 			var sArray = $gameVariables.value(sourcevariable);
 		}
 		return sArray;
+		} else {
+			return svstring
 		}
 	};
 	
