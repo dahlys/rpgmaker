@@ -330,15 +330,17 @@
 */
 	
 	function input_array(arg, endpt){
+		var newarray = [];
 		for (var k = arg.length - endpt; k >= 0; k--) {
 			if (Array.isArray(arg[k])) {
-			for (var j = 0; j < arg[k].length; j++) {
-				arg.splice(k + 1, 0, arg[k][j]);
-			};
-			arg.splice(k, 1); 
-			};
+				for (var j = 0; j < arg[k].length; j++) {
+					newarray.push(arg[k][j]);
+				}
+			} else {
+				newarray.push(arg[k]);
+			}
 		};
-		return arg;
+		return newarray;
 	}
 	
 	function counted_variables(c, n, a) {
@@ -388,41 +390,33 @@
 				return svstring;
 			}
 		} else if (/S\d+/.test(svstring)) {
-		var regex = /(?:S)(\d+)/;
-		var sourcevariable = Number(regex.exec(svstring)[1]); 
-		if (sourcevariable == 0) {
-			var sArray = [];
-			for (var eId = 1; eId < $dataMap.events.length; eId++) {
-				if ($dataMap.events[eId] != null) {
-					sArray.push(eId);
-				}
-			} 
+			var regex = /(?:S)(\d+)/;
+			var sourcevariable = Number(regex.exec(svstring)[1]); 
+			if (sourcevariable == 0) {
+				var sArray = [];
+				for (var eId = 1; eId < $dataMap.events.length; eId++) {
+					if ($dataMap.events[eId] != null) {
+						sArray.push(eId);
+					}
+				} 
+			} else {
+				var sArray = $gameVariables.value(sourcevariable);
+			}
+			if (sArray.length === 1) {
+				return sArray[0];
+			} else {
+				return sArray;
+			}
 		} else {
-			var sArray = $gameVariables.value(sourcevariable);
-		}
-		return sArray;
-		} else {
-			return svstring
+			return svstring;
 		}
 	};
 	
 	function identify_switch(sw, mapId, counted, sAry, value, cond) {	
 		for (var i = 0; i < sAry.length; i++) { 
 			eventId = sAry[i]; 
-			if (eval(cond)) { 
-				if (sw == "all or") {
-					if ($gameSelfSwitches.value([mapId, eventId, "A"]) == value || $gameSelfSwitches.value([mapId, eventId, "B"]) == value || $gameSelfSwitches.value([mapId, eventId, "C"]) == value || $gameSelfSwitches.value([mapId, eventId, "D"]) == value) {
-						counted.push(eventId);
-					}
-				} else if (sw == "all and") {
-					if ($gameSelfSwitches.value([mapId, eventId, "A"]) == value && $gameSelfSwitches.value([mapId, eventId, "B"]) == value && $gameSelfSwitches.value([mapId, eventId, "C"]) == value && $gameSelfSwitches.value([mapId, eventId, "D"]) == value) {
-						counted.push(eventId);
-					}
-				} else { 
-					if ($gameSelfSwitches.value([mapId, eventId, sw]) == value) {
-						counted.push(eventId);	
-					}	
-				}
+			if ($gameSelfSwitches.value([mapId, eventId, sw]) == value && eval(cond)) {
+				counted.push(eventId);	
 			}
 		}
 		return counted;
@@ -462,30 +456,49 @@
 	};
 	
 	/*
-	('Tom'^*) X
-	('Tom'^*, 1, 2, 'S0') X
-	('Tom'^*, 1, 2, 'cond'/bool) X
-	('Tom'^*, 1, 2, 'S0', 'cond'/bool) X
+	('Tom'^*, 1, 2, 'S0', 'cond'/bool, 'and'/'or')
+	('Tom'^*, 1, 2, 'S0', 'and'/'or') X
+	('Tom'^*, 1, 2, 'and'/'or') X
+	('Tom'^*, 'and'/'or')
 
-	('Tom'^*, 1, 2) X
+	('Tom'^*) X
+	('Tom'^*, 1, 2, 'S0')
+	('Tom'^*, 1, 2, 'cond'/bool)
+	('Tom'^*, 1, 2, 'S0', 'cond'/bool)
+
+	('Tom'^*, 1, 2)
 	*/
 	
 	function autoSearchNFix() {
 		var args = autoPlgCmdFix.apply(this, arguments);
-		if ( typeof args[args.length - 1] === "string" || ( Array.isArray(args[args.length - 1]) && typeof args[args.length - 1][0] === "string" ) || typeof args[args.length - 1] === "boolean" ) {
+		if ( args[args.length - 1] === 'and' || args[args.length - 1] === 'or' ) {
+			if ( typeof args[args.length - 2] == "number" ) {
+				args.splice(args.length - 1, 0, 'S0', true, 'or')
+			} else if ( /S\d+/.test(args[args.length - 2]) ) {
+				args.splice(args.length - 1, 0, true, 'or')
+			} else if ( !/S\d+/.test(args[args.length - 3]) ) {
+				args.splice(args.length - 1, 0, 0, 0, 'S0', true, 'or')
+			}
+		} else if ( typeof args[args.length - 1] === "string" || ( Array.isArray(args[args.length - 1]) && typeof args[args.length - 1][0] === "string" ) || typeof args[args.length - 1] === "boolean" ) {
 			if ( /S\d+/.test(args[args.length - 1]) ) { // ('Tom'*, 1, 2, 'S0')
 				args.push(true);
+				args.push('or');
 			} else if ( typeof args[args.length - 2] == "number" ) { // ('Tom'*, 1, 2, 'cond')
 				args.splice(args.length - 1, 0, "S0");
+				args.push('or');
 			} else if ( args.length === 1 || !/S\d+/.test(args[args.length - 2]) ) { // ('Tom'*)
 				args.push(0);
 				args.push(0);
 				args.push("S0");
 				args.push(true);
-			}			
+				args.push('or');
+			} else {
+				args.push('or');
+			}				
 		} else { // ('Tom'*, 1, 2)
 			args.push("S0");
 			args.push(true);
+			args.push('or');
 		};
 		return args;
 	};
@@ -503,6 +516,8 @@
 
 	("A"^*, bool/string/obj*, 'M3', 1, 2) X
 	("A"^*, bool/string/obj*, 1, 2) X
+	
+	('A'^*, bool, 'M3', 1, 2, 'S0', 'cond', 'and'/'or')
 	*/
 	
 	function autoSearchSwitchFix() {
@@ -510,13 +525,16 @@
 		if ( typeof args[args.length - 1] === "string" || ( Array.isArray(args[args.length - 1]) && typeof args[args.length - 1][0] === "string" ) ) {
 			if ( /S\d+/.test(args[args.length - 1]) ) { // ("A", true, 'M3', 1, 2, 'S3')
 				args.push(true); 
+				args.push('or');
 			} else if ( args[args.length - 1] === "thisM" || /M\d+/.test(args[args.length - 1]) ) { // ("A", true, 'thisM'/'M3')
 				args.push(0);
 				args.push(0);
 				args.push("S0");
 				args.push(true);
+				args.push('or');
 			} else if ( args.length > 1 && typeof args[args.length - 2] === "number" ) {
 				args.splice(args.length - 1, 0, 'S0');
+				args.push('or');
 			} else if ( args.length === 1 || !/S\d+/.test(args[args.length - 2]) ) { // ("A")
 				args.push(true);
 				args.push("thisM");
@@ -524,24 +542,29 @@
 				args.push(0);
 				args.push("S0");
 				args.push(true);
+				args.push('or');
 			}
 		} else if (typeof args[args.length - 1] === "number") { 
 			if (args[args.length - 3] === "thisM" || /M\d+/.test(args[args.length - 3])) { // ("A", true, 'M3', 1, 2)
 				args.push("S0");
 				args.push(true);
+				args.push('or');
 			} else { // ("A", true, 1, 2)
 				args.splice(args.length - 2, 0, "thisM");
 				args.push("S0");
 				args.push(true);
+				args.push('or');
 			}
 		} else if ( typeof args[args.length - 2] === "number" ) {	
 			args.splice(args.length - 1, 0, 'S0');
+			args.push('or');
 		} else if ( !/S\d+/.test(args[args.length - 2]) ) { // ("A", true)
 			args.push("thisM");
 			args.push(0);
 			args.push(0);
 			args.push("S0");
 			args.push(true);
+			args.push('or');
 		}; 
 		return args;
 	};
@@ -662,7 +685,7 @@
 			args.push("S0");
 			args.push(true);
 		} else if (args.length == 3) {
-			if (/S\d+/.test(args[0])) {
+			if ( /S\d+/.test(args[2]) || typeof args[2] === 'number' ) {
 				args.push(true);
 			} else {
 				args.splice(2, 0, "S0");
@@ -779,75 +802,125 @@
 		var countedId = args[2];
 		var countedNum = args[1];
 		var eventId = 0;
-		for (var i = 0; i < sourcearray.length; i++) {
-			eventId = sourcearray[i];
+		if ( Array.isArray(sourcearray) ) {
+			for (var i = 0; i < sourcearray.length; i++) {
+				eventId = sourcearray[i];
+				if (eval(condition)) {
+					counted.push(eventId);
+				}
+			}
+		} else {
+			eventId = sourcearray;
 			if (eval(condition)) {
 				counted.push(eventId);
 			}
 		}
+		
 		counted_variables(counted, countedNum, countedId);
 		return counted;
 	};
  
+	// ('Tom'^*, 1, 2, 'S0', 'cond'/bool, 'and'/'or')	
 	function search_name() {
-		var inputcheck = autoSearchNFix.apply(this, arguments);
-		var args = input_array(inputcheck, 4);
+		var args = autoSearchNFix.apply(this, arguments);
+		var namelist = input_array(args, 6);
 		var counted = [];
-		var condition = args[args.length - 1];
-		var sourcestring = args[args.length - 2];
+		var condition = args[args.length - 2];
+		var sourcestring = args[args.length - 3];
 		var sourcearray = create_source_array(sourcestring);
-		var countedId = args[args.length - 3];
-		var countedNum = args[args.length - 4];
+		var countedId = args[args.length - 4];
+		var countedNum = args[args.length - 5];
 		var eventId = 0;
-		for (var i = 0; i < args.length - 4; i++) {
+		if ( !Array.isArray(sourcearray) ) {
+			sourcearray = [sourcearray];
+		}
+		if ( args[args.length - 1] === 'or' ) {
 			for (var k = 0; k < sourcearray.length; k++) {
 				eventId = sourcearray[k];
-				if ($dataMap.events[eventId].name.includes(args[i]) && eval(condition)) {
-					counted.push(eventId);
-				}
+				for ( var i = 0; i < namelist.length; i++ ) {
+					if ($dataMap.events[eventId].name.includes(namelist[i]) && eval(condition)) {
+						counted.push(eventId);
+					}
+				}				
 			}
-		};
-		counted_variables(counted, countedNum, countedId);
-		return counted;
+			counted_variables(counted, countedNum, countedId);
+			return counted;
+		} else {
+			for (var k = 0; k < sourcearray.length; k++) {
+				eventId = sourcearray[k];
+				if ( $dataMap.events[eventId].name.includes(namelist[namelist.length - 1]) && eval(condition) ) { 
+					counted.push(eventId);
+				}			
+			}
+			var newlist = namelist.pop();
+			if ( newlist.length > 0 ) {
+				search_name(newlist, countedNum, countedId, counted, true, 'and');
+			} else {
+				counted_variables(counted, countedNum, countedId);
+				return counted;
+			}		
+		}				
 	};
-
+	
 	function search_note() {
-		var inputcheck = autoSearchNFix.apply(this, arguments);
-		var args = input_array(inputcheck, 4);
+		var args = autoSearchNFix.apply(this, arguments);
+		var notelist = input_array(args, 6);
 		var counted = [];
-		var condition = args[args.length - 1];
-		var sourcestring = args[args.length - 2];
+		var condition = args[args.length - 2]; 
+		var sourcestring = args[args.length - 3];
 		var sourcearray = create_source_array(sourcestring);
-		var countedId = args[args.length - 3];
-		var countedNum = args[args.length - 4];
+		var countedId = args[args.length - 4];
+		var countedNum = args[args.length - 5];
 		var eventId = 0;
-		for (var i = 0; i < args.length - 4; i++) {
+		if ( !Array.isArray(sourcearray) ) {
+			sourcearray = [sourcearray];
+		}
+		if ( args[args.length - 1] === 'or' ) {
+			for (var k = 0; k < sourcearray.length; k++) {
+				eventId = sourcearray[k]; 
+				for ( var i = 0; i < notelist.length; i++ ) {
+					if ($dataMap.events[eventId].note) { 
+						if ($dataMap.events[eventId].note.includes(notelist[i]) && eval(condition)) {
+							counted.push(eventId);
+						}
+					}
+				}				
+			}
+			counted_variables(counted, countedNum, countedId);
+			return counted;
+		} else {
 			for (var k = 0; k < sourcearray.length; k++) {
 				eventId = sourcearray[k];
 				if ($dataMap.events[eventId].note) { 
-					if ($dataMap.events[eventId].note.includes(args[i]) && eval(condition)) {
+					if ($dataMap.events[eventId].note.includes(notelist[notelist.length - 1]) && eval(condition)) {
 						counted.push(eventId);
 					}
-				}
+				}		
 			}
-		};
-		counted_variables(counted, countedNum, countedId);
-		return counted;
+			var newlist = notelist.pop();
+			if ( newlist.length > 0 ) {
+				search_note(newlist, countedNum, countedId, counted, true, 'and');
+			} else {
+				counted_variables(counted, countedNum, countedId);
+				return counted;
+			}		
+		}			
 	};
-		
+				
 	function search_switch() {
 		var args = autoSearchSwitchFix.apply(this, arguments);
 		var counted = [];
-		var condition = args[args.length - 1]; 
-		var sourcestring = args[args.length - 2];
+		var condition = args[args.length - 2]; 
+		var sourcestring = args[args.length - 3];
 		var sourcearray = create_source_array(sourcestring); 
-		var countedId = args[args.length - 3];
-		var countedNum = args[args.length - 4];
-		var mapPoint = args[args.length - 5];
+		var countedId = args[args.length - 4];
+		var countedNum = args[args.length - 5];
+		var mapPoint = args[args.length - 6];
 		var mapId = get_mapId(mapPoint); 
-		var value = args[args.length - 6];
+		var value = args[args.length - 7];
 		var swnames = [];
-		for (var i = 0; i < args.length - 6; i++) {
+		var eventId = 0;
+		for (var i = 0; i < args.length - 7; i++) {
 			if (Array.isArray(args[i])) {
 				for (var k = 0; k < args[i].length; k++) {
 					if (typeof args[i][k] == "number") {
@@ -862,68 +935,144 @@
 				swnames.push(args[i]);
 			}
 		};
-		for (var j = 0; j < swnames.length; j++) {
-			if (Array.isArray(value)) {
-				counted = identify_switch(swnames[j], mapId, counted, sourcearray, value[j], condition);
-			} else {
-				counted = identify_switch(swnames[j], mapId, counted, sourcearray, value, condition);
+		if ( args[args.length - 1] === 'or' ) {
+			for (var j = 0; j < swnames.length; j++) {
+				for ( var i = 0; i < sourcearray.length; i++ ) { 
+					eventId = sourcearray[i]; 
+					if ( Array.isArray(value) && $gameSelfSwitches.value([mapId, eventId, swnames[j]]) == value[j] && eval(condition) ) {
+						counted.push(eventId);
+					} else if ( $gameSelfSwitches.value([mapId, eventId, swnames[j]]) == value && eval(condition) ) {
+						counted.push(eventId);
+					}					
+				}
 			}
-		};
-		counted_variables(counted, countedNum, countedId);
-		return counted;
+			counted_variables(counted, countedNum, countedId);
+			return counted;
+		} else {
+			for ( var i = 0; i < sourcearray.length; i++ ) { 
+				eventId = sourcearray[i]; 
+				if ( Array.isArray(value) && $gameSelfSwitches.value([mapId, eventId, swnames[swnames.length - 1]]) == value[value.length - 1] && eval(condition) ) {
+					counted.push(eventId);
+				} else if ( $gameSelfSwitches.value([mapId, eventId, swnames[swnames.length - 1]]) == value && eval(condition) ) {
+					counted.push(eventId);
+				}					
+			}
+			var newlist = swnames.pop();
+			if ( Array.isArray(value) ) {
+				var newvalues = value.pop();
+			} else {
+				var newvalues = value;
+			}
+			if ( swnames.length > 0 ) {
+				search_switch(newlist, newvalues, mapId, countedNum, countedId, counted, true, 'and');
+			} else {
+				counted_variables(counted, countedNum, countedId);
+				return counted;
+			}
+		}				
 	};	
 		
 	function search_HimeSV() {
-		var inputcheck = autoSearchSwitchFix.apply(this, arguments); 
-		var args = input_array(inputcheck, 6); 
+		var args = autoSearchSwitchFix.apply(this, arguments); 
+		var variablelist = input_array(args, 7); 
 		var counted = [];
-		var condition = args[args.length - 1];
-		var sourcestring = args[args.length - 2];
+		var condition = args[args.length - 2];
+		var sourcestring = args[args.length - 3];
 		var sourcearray = create_source_array(sourcestring);
-		var countedId = args[args.length - 3];
-		var countedNum = args[args.length - 4];
-		var mapPoint = args[args.length - 5];
+		var countedId = args[args.length - 4];
+		var countedNum = args[args.length - 5];
+		var mapPoint = args[args.length - 6];
 		var mapId = get_mapId(mapPoint);
-		var value = args[args.length - 6];
-		for (var i = 0; i < args.length - 6; i++) {
+		var value = args[args.length - 7];
+		var eventId = 0;
+		if ( !Array.isArray(sourcearray) ) {
+			sourcearray = [sourcearray];
+		}
+		if ( args[args.length - 1] === 'or' ) {
+			for (var i = 0; i < variablelist.length; i++) {
+				for (var k = 0; k < sourcearray.length; k++) {
+					eventId = sourcearray[k];
+					if ( Array.isArray(value) && $gameSelfVariables.value(mapId, eventId, variablelist[i]) == value[i] && eval(condition) ) {
+						counted.push(eventId);
+					} else if ( $gameSelfVariables.value(mapId, eventId, variablelist[i]) == value && eval(condition) ) {
+						counted.push(eventId);		
+					}
+				}
+			}
+			counted_variables(counted, countedNum, countedId);
+			return counted;
+		} else {
 			for (var k = 0; k < sourcearray.length; k++) {
 				eventId = sourcearray[k];
-				if ( Array.isArray(value) && $gameSelfVariables.value(mapId, eventId, args[i]) == value[i] && eval(condition) ) {
+				if ( Array.isArray(value) && $gameSelfVariables.value(mapId, eventId, variablelist[variablelist.length - 1]) == value[value.length - 1] && eval(condition) ) {
 					counted.push(eventId);
-				} else if ( $gameSelfVariables.value(mapId, eventId, args[i]) == value && eval(condition) ) {
+				} else if ( $gameSelfVariables.value(mapId, eventId, variablelist[variablelist.length - 1]) == value && eval(condition) ) {
 					counted.push(eventId);		
 				}
 			}
-		}
-		counted_variables(counted, countedNum, countedId);
-		return counted;
+			var newlist = variablelist.pop();
+			if ( Array.isArray(value) ) {
+				var newvalues = value.pop();
+			} else {
+				var newvalues = value;
+			}
+			if ( swnames.length > 0 ) {
+				search_switch(newlist, newvalues, mapId, countedNum, countedId, counted, true, 'and');
+			} else {
+				counted_variables(counted, countedNum, countedId);
+				return counted;
+			}
+		}		
 	};
 	
 	function search_YanflySV() {
-		var inputcheck = autoSearchSwitchFix.apply(this, arguments); 
-		var args = input_array(inputcheck, 6); 
+		var args = autoSearchSwitchFix.apply(this, arguments); 
+		var svNames = input_array(args, 7); 
 		var counted = [];
-		var condition = args[args.length - 1];
-		var sourcestring = args[args.length - 2];
+		var condition = args[args.length - 2];
+		var sourcestring = args[args.length - 3];
 		var sourcearray = create_source_array(sourcestring);
-		var countedId = args[args.length - 3];
-		var countedNum = args[args.length - 4];
-		var mapPoint = args[args.length - 5];
+		var countedId = args[args.length - 4];
+		var countedNum = args[args.length - 5];
+		var mapPoint = args[args.length - 6];
 		var mapId = get_mapId(mapPoint);
-		var value = args[args.length - 6]; 
-		var swname = [];
-		for (var j = 0; j < args.length - 6; j++) {
-			for (var k = 0; k < sourcearray.length; k++) {
-				eventId = sourcearray[k];
-				if ( Array.isArray(value) && $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + args[j]]) == value[j] && eval(condition) ) {
-					counted.push(eventId);
-				} else if ( $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + args[j]]) == value && eval(condition) ) {
-					counted.push(eventId);		
+		var value = args[args.length - 7]; 
+		var eventId = 0;
+		if ( args[args.length - 1] === 'or' ) {
+			for (var j = 0; j < svNames.length; j++) {
+				for ( var i = 0; i < sourcearray.length; i++ ) { 
+					eventId = sourcearray[i]; 
+					if ( Array.isArray(value) && $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + svNames[j]]) == value[j] && eval(condition) ) {
+						counted.push(eventId);
+					} else if ( $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + svNames[j]]) == value && eval(condition) ) {
+						counted.push(eventId);
+					}					
 				}
 			}
-		};
-		counted_variables(counted, countedNum, countedId);
-		return counted;
+			counted_variables(counted, countedNum, countedId);
+			return counted;
+		} else {
+			for ( var i = 0; i < sourcearray.length; i++ ) { 
+				eventId = sourcearray[i]; 
+				if ( Array.isArray(value) && $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + svNames[svNames.length - 1]]) == value[value.length - 1] && eval(condition) ) {
+					counted.push(eventId);
+				} else if ( $gameSelfSwitches.value([mapId, eventId, 'SELF VARIABLE ' + svNames[svNames.length - 1]]) == value && eval(condition) ) {
+					counted.push(eventId);
+				}					
+			}
+			var newlist = svNames.pop();
+			if ( Array.isArray(value) ) {
+				var newvalues = value.pop();
+			} else {
+				var newvalues = value;
+			}
+			if ( svNames.length > 0 ) {
+				search_switch(newlist, newvalues, mapId, countedNum, countedId, counted, true, 'and');
+			} else {
+				counted_variables(counted, countedNum, countedId);
+				return counted;
+			}
+		}
 	};
 
 /* 
@@ -981,8 +1130,8 @@
 */
 	
 	function get_swswitch_fast() {
-		var args = autoGetSSwFastFix.apply(this, arguments);
-		var switchName = args[0];
+		var args = autoGetSSwFastFix.apply(this, arguments); 
+		var switchName = args[0]; 
 		var eventId = args[1];
 		var mapId = get_mapId(args[2]);
 		var cond = args[3];	
@@ -1123,49 +1272,58 @@
 		var switchName = args[0];
 		var countedId = args[2];
 		var countedNum = args[1];
-		var eventId = create_source_array(args[3]);
+		var source = create_source_array(args[3]);
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
-		if ( eval(cond) ) {
-			if ( Array.isArray(switchName) ) {
-				if ( Array.isArray(eventId) ) {
-					if ( Array.isArray(mapId) ) {
-						for ( var i = 0; i < switchName.length; i++ ) {
-							result.push($gameSelfVariables.value([mapId[i], eventId[i], switchName[i]]));
-						}
-					} else {
-						for ( var i = 0; i < switchName.length; i++ ) {
-							result.push($gameSelfVariables.value([mapId, eventId[i], switchName[i]]));
-						}
-					}					
-				} else if ( Array.isArray(mapId) ) {
-					for ( var i = 0; i < switchName.length; i++ ) {
-						result.push($gameSelfVariables.value([mapId[i], eventId, switchName[i]]));
+		var eventId = 0;
+		if ( Array.isArray(switchName) ) {
+			if ( Array.isArray(source) ) {
+				for ( var i = 0; i < switchName.length; i++ ) {
+					eventId = source[i];
+					if ( Array.isArray(mapId) && eval(cond) ) {
+						result.push($gameSelfVariables.value(mapId[i], eventId, switchName[i]));
+					} else if ( eval(cond) ) {
+						result.push($gameSelfVariables.value(mapId, eventId, switchName[i]));
 					}
-				} else {
-					for ( var i = 0; i < switchName.length; i++ ) {
-						result.push($gameSelfVariables.value([mapId, eventId, switchName[i]]));
-					}
-				}
-			} else if ( Array.isArray(eventId) ) {
-				if ( Array.isArray(mapId) ) {
-					for ( var i = 0; i < eventId.length; i++ ) {
-						result.push($gameSelfVariables.value([mapId[i], eventId[i], switchName]));
-					}
-				} else {
-					for ( var i = 0; i < eventId.length; i++ ) {
-						result.push($gameSelfVariables.value([mapId, eventId[i], switchName]));
-					}
-				}
+				}			
 			} else if ( Array.isArray(mapId) ) {
-				for ( var i = 0; i < mapId.length; i++ ) {
-					result.push($gameSelfVariables.value([mapId[i], eventId, switchName]));
-				}
+				eventId = source;
+				if ( eval(cond) ) {
+					for ( var i = 0; i < switchName.length; i++ ) {
+						result.push($gameSelfVariables.value(mapId[i], eventId, switchName[i]));
+					}
+				}					
 			} else {
-				result.push($gameSelfVariables.value([mapId, eventId, switchName]));
+				eventId = source;
+				for ( var i = 0; i < switchName.length; i++ ) {
+					if ( eval(cond) ) {
+						result.push($gameSelfVariables.value(mapId, eventId, switchName[i]));
+					}
+				}
 			}
-		}; 
+		} else if ( Array.isArray(source) ) {
+			for ( var i = 0; i < switchName.length; i++ ) {
+				eventId = source[i];
+				if ( Array.isArray(mapId) && eval(cond) ) {
+					result.push($gameSelfVariables.value(mapId[i], eventId, switchName));
+				} else if ( eval(cond) ) {
+					result.push($gameSelfVariables.value(mapId, eventId, switchName));
+				}
+			}				
+		} else if ( Array.isArray(mapId) ) {
+			eventId = source;
+			if ( eval(cond) ) {
+				for ( var i = 0; i < mapId.length; i++ ) {
+					result.push($gameSelfVariables.value(mapId[i], eventId, switchName));
+				}
+			}				
+		} else {
+			eventId = source;
+			if ( eval(cond) ) {
+				result.push($gameSelfVariables.value(mapId, eventId, switchName));
+			}				
+		} 
 		counted_variables(result, countedNum, countedId);
 		return result;
 	};
@@ -1177,12 +1335,19 @@
 		var sourcearray = create_source_array(args[2]);
 		var cond = args[3];
 		var namelist = [];
-		for (var i = 0; i < sourcearray.length; i++) {
-			var eventId = sourcearray[i];
+		if ( Array.isArray(sourcearray) ) {
+			for (var i = 0; i < sourcearray.length; i++) {
+				var eventId = sourcearray[i];
+				if (eval(cond)) {
+					namelist.push($dataMap.events[eventId].name);
+				}
+			};
+		} else {
+			var eventId = sourcearray;
 			if (eval(cond)) {
 				namelist.push($dataMap.events[eventId].name);
 			}
-		};
+		}		
 		counted_variables(namelist, countedNum, countedId);
 		return namelist;
 	};
@@ -1194,12 +1359,19 @@
 		var sourcearray = create_source_array(args[2]);
 		var cond = args[3];
 		var notelist = [];
-		for (var i = 0; i < sourcearray.length; i++) {
+		if (  Array.isArray(sourcearray) ) {
+			for (var i = 0; i < sourcearray.length; i++) {
+				var eventId = sourcearray[i];
+				if ( $dataMap.events[eventId].note && eval(cond) ) {
+					notelist.push($dataMap.events[eventId].note);
+				}
+			};
+		} else {
 			var eventId = sourcearray[i];
-			if (eval(cond)) {
+			if ( $dataMap.events[eventId].note && eval(cond) ) {
 				notelist.push($dataMap.events[eventId].note);
 			}
-		};
+		}		
 		counted_variables(notelist, countedNum, countedId);
 		return notelist;
 	};
@@ -1289,14 +1461,15 @@
 		var args = autoSetSSwFix.apply(this, arguments);
 		var switchName = args[0];
 		var value = args[1];
-		var eventId = create_source_array(args[2]);
+		var source = create_source_array(args[2]);
 		var mapPoint = args[3];
 		var mapId = get_mapId(mapPoint);
 		var cond = args[4];
-		var SnIsArray = Array.isArray(switchName);
-		var valueIsArray = Array.isArray(value);
-		var eIdIsArray = Array.isArray(eventId);
-		var mIdIsArray = Array.isArray(mapId); 
+		var SnIsArray = Array.isArray(switchName); 
+		var valueIsArray = Array.isArray(value); 
+		var eIdIsArray = Array.isArray(source); 
+		var mIdIsArray = Array.isArray(mapId);
+		var eventId = 0;
 		if (SnIsArray) {
 			for (var k = 0; k < switchName.length; k++) {
 				if (typeof switchName[k] == "number") {
@@ -1306,6 +1479,209 @@
 		} else if (typeof switchName == "number") {
 			switchName = 'SELF SWITCH ' + switchName;
 		}
+		if (SnIsArray) {
+			for (var i = 0; i < switchName.length; i++) {
+				if (valueIsArray) {
+					if (eIdIsArray) {
+						eventId = source[i];
+						if (mIdIsArray && eval(cond)) {
+							$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
+						} else if ( eval(cond) ) {
+							$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]);
+						}
+					} else if (mIdIsArray) {
+						eventId = source;
+						if ( eval(cond) ) {
+							$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
+						} 
+					} else {
+						eventId = source;
+						if ( eval(cond) ) {
+							$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]);
+						}					
+					}
+				} else if (eIdIsArray) {
+					eventId = source[i];
+					if (mIdIsArray && eval(cond)) {
+						$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value);
+					} else if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value);
+					}
+				} else if (mIdIsArray) {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId[i], source, switchName[i]], value);
+					}					
+				} else {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, source, switchName[i]], value);
+					}				
+				}
+			}
+		} else if (valueIsArray) {
+			for (var i = 0; i < value.length; i++) {
+				if (eIdIsArray) {
+					eventId = source[i];
+					if (mIdIsArray && eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value[i]);
+					} else if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, eventId, switchName], value[i]);
+					}
+				} else if (mIdIsArray) {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value[i]);
+					}					
+				} else{
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, eventId, switchName], value[i]);
+					}					
+				}
+			}
+		} else if (eIdIsArray) {
+			for (var i = 0; i < source.length; i++) {
+				eventId = source[i]; 
+				if (mIdIsArray && eval(cond)) {
+					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value);
+				} else if (eval(cond)) {
+					$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
+				}
+			}	
+		} else if (mIdIsArray) {
+			eventId = source;
+			for (var i = 0; i < mapId.length; i++) {
+				if (eval(cond)) {
+					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value);
+				}
+			}	
+		} else {
+			eventId = source;
+			if ( eval(cond) ) {
+				$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
+			}			
+		}		
+	};
+		
+	function set_HimeSV(){
+		var args = autoSetSSwFix.apply(this, arguments);
+		var switchName = args[0];
+		var value = args[1];
+		var source = create_source_array(args[2]);
+		var mapId = args[3];
+		var cond = args[4];
+		var SnIsArray = Array.isArray(switchName);
+		var valueIsArray = Array.isArray(value);
+		var eIdIsArray = Array.isArray(source);
+		var mIdIsArray = Array.isArray(mapId); 
+		var eventId = 0;
+		if (SnIsArray) {
+			for (var i = 0; i < switchName.length; i++) {
+				if (valueIsArray) {
+					if (eIdIsArray) {
+						eventId = source[i];
+						if (mIdIsArray && eval(cond)) {
+							$gameSelfVariables.setValue(mapId[i], eventId, switchName[i], value[i]);
+						} else if ( eval(cond) ) {
+							$gameSelfVariables.setValue(mapId, eventId, switchName[i], value[i]);
+						}
+					} else if (mIdIsArray) {
+						eventId = source;
+						if ( eval(cond) ) {
+							$gameSelfVariables.setValue(mapId[i], eventId, switchName[i], value[i]);
+						} 
+					} else {
+						eventId = source;
+						if ( eval(cond) ) {
+							$gameSelfVariables.setValue(mapId, eventId, switchName[i], value[i]);
+						}					
+					}
+				} else if (eIdIsArray) {
+					eventId = source[i];
+					if (mIdIsArray && eval(cond)) {
+						$gameSelfVariables.setValue(mapId[i], eventId, switchName[i], value);
+					} else if ( eval(cond) ) {
+						$gameSelfVariables.setValue(mapId, eventId, switchName[i], value);
+					}
+				} else if (mIdIsArray) {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfVariables.setValue(mapId[i], source, switchName[i], value);
+					}					
+				} else {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfVariables.setValue(mapId, source, switchName[i], value);
+					}				
+				}
+			}
+		} else if (valueIsArray) {
+			for (var i = 0; i < value.length; i++) {
+				if (eIdIsArray) {
+					eventId = source[i];
+					if (mIdIsArray && eval(cond) ) {
+						$gameSelfVariables.setValue(mapId[i], eventId, switchName, value[i]);
+					} else if ( eval(cond) ) {
+						$gameSelfVariables.setValue(mapId, eventId, switchName, value[i]);
+					}
+				} else if (mIdIsArray) {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfVariables.setValue(mapId[i], eventId, switchName, value[i]);
+					}					
+				} else{
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfVariables.setValue(mapId, eventId, switchName, value[i]);
+					}					
+				}
+			}
+		} else if (eIdIsArray) {
+			for (var i = 0; i < source.length; i++) {
+				eventId = source[i]; 
+				if (mIdIsArray && eval(cond)) {
+					$gameSelfVariables.setValue(mapId[i], eventId, switchName, value);
+				} else if (eval(cond)) {
+					$gameSelfVariables.setValue(mapId, eventId, switchName, value);
+				}
+			}	
+		} else if (mIdIsArray) {
+			eventId = source;
+			for (var i = 0; i < mapId.length; i++) {
+				if (eval(cond)) {
+					$gameSelfVariables.setValue(mapId[i], eventId, switchName, value);
+				}
+			}	
+		} else {
+			eventId = source;
+			if ( eval(cond) ) {
+				$gameSelfVariables.setValue(mapId, eventId, switchName, value);
+			}			
+		}		
+	};
+			
+	function set_YanflySV(){
+		var args = autoSetSSwFix.apply(this, arguments);
+		var switchName = args[0];
+		var value = args[1];
+		var eventId = create_source_array(args[2]);
+		var mapPoint = args[3];
+		var mapId = get_mapId(mapPoint);
+		var cond = args[4];
+		var SnIsArray = Array.isArray(switchName); 
+		var valueIsArray = Array.isArray(value); 
+		var eIdIsArray = Array.isArray(eventId);
+		var mIdIsArray = Array.isArray(mapId); 
+		if (SnIsArray) {
+			for (var k = 0; k < switchName.length; k++) {
+				if (typeof switchName[k] == "number") {
+					switchName[k] = 'SELF VARIABLE ' + switchName[k];
+				}
+			}
+		} else if (typeof switchName == "number") {
+			switchName = 'SELF VARIABLE ' + switchName;
+		};
 		if (SnIsArray) {
 			for (var i = 0; i < switchName.length; i++) {
 				if (valueIsArray && eval(cond)) {
@@ -1362,158 +1738,6 @@
 			}	
 		} else if (eval(cond)) {
 			$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
-		}
-		
-	};
-		
-	function set_HimeSV(){
-		var args = autoSetSSwFix.apply(this, arguments);
-		var switchName = args[0];
-		var value = args[1];
-		var eventId = create_source_array(args[2]);
-		var mapId = args[3];
-		var cond = args[4];
-		var SnIsArray = Array.isArray(switchName);
-		var valueIsArray = Array.isArray(value);
-		var eIdIsArray = Array.isArray(eventId);
-		var mIdIsArray = Array.isArray(mapId); 
-		if (SnIsArray) {
-			for (var i = 0; i < switchName.length; i++) {
-				if (valueIsArray && eval(cond)) {
-					if (eIdIsArray) {
-						if (mIdIsArray) {
-							$gameSelfVariables.setValue(mapId[i], eventId[i], switchName[i], value[i]);
-						} else {
-							$gameSelfVariables.setValue(mapId, eventId[i], switchName[i], value[i]);
-						}
-					} else if (mIdIsArray) {
-						$gameSelfVariables.setValue(mapId[i], eventId, switchName[i], value[i]);
-					} else {
-						$gameSelfVariables.setValue(mapId, eventId, switchName[i], value[i]);
-					}
-				} else if (eIdIsArray && eval(cond)) {
-					if (mIdIsArray) {
-						$gameSelfVariables.setValue(mapId[i], eventId[i], switchName[i], value);
-					} else {
-						$gameSelfVariables.setValue(mapId, eventId[i], switchName[i], value);
-					}
-				} else if (mIdIsArray && eval(cond)) {
-					$gameSelfVariables.setValue(mapId[i], eventId, switchName[i], value);
-				} else if (eval(cond)) {
-					$gameSelfVariables.setValue(mapId, eventId, switchName[i], value);
-				}
-			}
-		} else if (valueIsArray) {
-			for (var i = 0; i < value.length; i++) {
-				if (eIdIsArray && eval(cond)) {
-					if (mIdIsArray) {
-						$gameSelfVariables.setValue(mapId[i], eventId[i], switchName, value[i]);
-					} else {
-						$gameSelfVariables.setValue(mapId, eventId[i], switchName, value[i]);
-					}
-				} else if (mIdIsArray && eval(cond)) {
-					$gameSelfVariables.setValue(mapId[i], eventId, switchName, value[i]);
-				} else if (eval(cond)) {
-					$gameSelfVariables.setValue(mapId, eventId, switchName, value[i]);
-				}
-			}
-		} else if (eIdIsArray) {
-			for (var i = 0; i < eventId.length; i++) {
-				if (mIdIsArray && eval(cond)) {
-					$gameSelfVariables.setValue(mapId[i], eventId[i], switchName, value);
-				} else if (eval(cond)) {
-					$gameSelfVariables.setValue(mapId, eventId[i], switchName, value);
-				}
-			}	
-		} else if (mIdIsArray) {
-			for (var i = 0; i < mapId.length; i++) {
-				if (eval(cond)) {
-					$gameSelfVariables.setValue(mapId[i], eventId, switchName, value);
-				}
-			}	
-		} else if (eval(cond)) {
-			$gameSelfVariables.setValue(mapId, eventId, switchName, value);
-		}
-		
-	};	
-	
-	function set_YanflySV(){
-		var args = autoSetSSwFix.apply(this, arguments);
-		var switchName = args[0];
-		var value = args[1];
-		var eventId = create_source_array(args[2]);
-		var mapPoint = args[3];
-		var mapId = get_mapId(mapPoint);
-		var cond = args[4];
-		var SnIsArray = Array.isArray(switchName); console.log(SnIsArray);
-		var valueIsArray = Array.isArray(value); console.log(valueIsArray);
-		var eIdIsArray = Array.isArray(eventId);
-		var mIdIsArray = Array.isArray(mapId); 
-		if (SnIsArray) {
-			for (var k = 0; k < switchName.length; k++) {
-				if (typeof switchName[k] == "number") {
-					switchName[k] = 'SELF VARIABLE ' + switchName[k];
-				}
-			}
-		} else if (typeof switchName == "number") {
-			switchName = 'SELF VARIABLE ' + switchName;
-		};
-		if (SnIsArray) {
-			for (var i = 0; i < switchName.length; i++) {
-				if (valueIsArray && eval(cond)) {
-					if (eIdIsArray) {
-						if (mIdIsArray) {
-							$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName[i]], value[i]);
-						} else {
-							$gameSelfSwitches.setValue([mapId, eventId[i], switchName[i]], value[i]);
-						}
-					} else if (mIdIsArray) {
-						$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
-					} else {
-						$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]); console.log(switchName[i] + " " + value[i]);
-					}
-				} else if (eIdIsArray && eval(cond)) {
-					if (mIdIsArray) {
-						$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName[i]], value);
-					} else {
-						$gameSelfSwitches.setValue([mapId, eventId[i], switchName[i]], value);
-					}
-				} else if (mIdIsArray && eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value);
-				} else if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value);
-				}
-			}
-		} else if (valueIsArray) {
-			for (var i = 0; i < value.length; i++) {
-				if (eIdIsArray && eval(cond)) {
-					if (mIdIsArray) {
-						$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName], value[i]);
-					} else {
-						$gameSelfSwitches.setValue([mapId, eventId[i], switchName], value[i]);
-					}
-				} else if (mIdIsArray && eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value[i]);
-				} else if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId, eventId, switchName], value[i]);
-				}
-			}
-		} else if (eIdIsArray) {
-			for (var i = 0; i < eventId.length; i++) {
-				if (mIdIsArray && eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName], value);
-				} else if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId, eventId[i], switchName], value);
-				}
-			}	
-		} else if (mIdIsArray) {
-			for (var i = 0; i < mapId.length; i++) {
-				if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value);
-				}
-			}	
-		} else if (eval(cond)) {
-			$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
 		}		
 	};
 	
@@ -1525,49 +1749,49 @@
 	
 	function set_self_switch_name(){
 		var args = autoSSwNFix.apply(this, arguments);
-		var eventId = search_name(args[0], 0, 0, args[3], true);
+		var eventId = search_name(args[0], 0, 0, args[3], args[4], 'or');
 		for ( var i = 0; i < eventId.length; i++ ) {
-			set_self_switch(args[1], args[2], eventId[i], "thisM", args[4]);
+			set_self_switch(args[1], args[2], eventId[i], "thisM", true);
 		};		
 	};
 
 	function set_self_switch_note(){
-		var args = autoSSwNFix.apply(this, arguments);
-		var eventId = search_note(args[0], 0, 0, args[3], true);
+		var args = autoSSwNFix.apply(this, arguments); console.log(args);
+		var eventId = search_note(args[0], 0, 0, args[3], args[4], 'or');
 		for ( var i = 0; i < eventId.length; i++ ) {
-			set_self_switch(args[1], args[2], eventId[i], "thisM", args[4]);
+			set_self_switch(args[1], args[2], eventId[i], "thisM", true);
 		};	
 	};
 	
 	function set_HimeSV_name(){
 		var args = autoSSwNFix.apply(this, arguments);
-		var eventId = search_name(args[0], 0, 0, args[3], true);
+		var eventId = search_name(args[0], 0, 0, args[3], args[4]);
 		for ( var i = 0; i < eventId.length; i++ ) {
-			set_HimeSV(args[1], args[2], eventId[i], "thisM", args[4]);
+			set_HimeSV(args[1], args[2], eventId[i], "thisM", true);
 		};
 	};
 
 	function set_HimeSV_note(){
 		var args = autoSSwNFix.apply(this, arguments);
-		var eventId = search_note(args[0], 0, 0, args[3], true);
+		var eventId = search_note(args[0], 0, 0, args[3], args[4]);
 		for ( var i = 0; i < eventId.length; i++ ) {
-			set_HimeSV(args[1], args[2], eventId[i], "thisM", args[4]);
+			set_HimeSV(args[1], args[2], eventId[i], "thisM", true);
 		};
 	};
 	
 	function set_YanflySV_name(){
 		var args = autoSSwNFix.apply(this, arguments);
-		var eventId = search_name(args[0], 0, 0, args[3], true);
+		var eventId = search_name(args[0], 0, 0, args[3], args[4]);
 		for ( var i = 0; i < eventId.length; i++ ) {
-			set_YanflySV(args[1], args[2], eventId[i], "thisM", args[4]);
+			set_YanflySV(args[1], args[2], eventId[i], "thisM", true);
 		};
 	};
 
 	function set_YanflySV_note(){
 		var args = autoSSwNFix.apply(this, arguments);
-		var eventId = search_note(args[0], 0, 0, args[3], true);
+		var eventId = search_note(args[0], 0, 0, args[3], args[4]);
 		for ( var i = 0; i < eventId.length; i++ ) {
-			set_YanflySV(args[1], args[2], eventId[i], "thisM", args[4]);
+			set_YanflySV(args[1], args[2], eventId[i], "thisM", true);
 		};
 	};
 
@@ -1588,18 +1812,20 @@
 function Search() {};
 
 	// Search if Name exists in Map from Source with Condition
-	Search.Names = function(name, source, cond) {
+	Search.Names = function(name, source, cond, andor) {
 		if (typeof source === 'undefined') { source = "S0"; };
 		if (typeof cond === 'undefined') { cond = true; };
-		if ($gameTemp.SearchNames(name, 0, 0, source, cond).length > 0) { return true; }
+		if (typeof andor === 'undefined') { andor = 'or'; };
+		if ($gameTemp.SearchNames(name, 0, 0, source, cond, andor).length > 0) { return true; }
 		return false;
 	};
 	
 	// Search if Note exists in Map from Source with Condition
-	Search.Notes = function(note, source, cond) {
+	Search.Notes = function(note, source, cond, andor) {
 		if (typeof source === 'undefined') { source = "S0"; };
 		if (typeof cond === 'undefined') { cond = true; };
-		if ($gameTemp.SearchNotes(note, 0, 0, source, cond).length > 0) { return true; }
+		if (typeof andor === 'undefined') { andor = 'or'; };
+		if ($gameTemp.SearchNotes(note, 0, 0, source, cond, andor).length > 0) { return true; }
 		return false;
 	};
 	
