@@ -1,5 +1,5 @@
 /*:
- * @plugindesc Universal Remote Control
+ * @plugindesc Search Events, Retrieve Data, Remote Control Self Switches
  * @author dahlys
  *
  * @help
@@ -1138,7 +1138,7 @@
 		if (typeof switchName == "number") {
 			switchName = 'SELF SWITCH ' + switchName;
 		}
-		if (eval(cond)) { 
+		if ( eval(cond) ) { 
 			return $gameSelfSwitches.value([mapId, eventId, switchName]);
 		} else {
 			return false;
@@ -1150,7 +1150,7 @@
 		var switchName = args[0];
 		var countedId = args[2];
 		var countedNum = args[1];
-		var eventId = create_source_array(args[3]);
+		var sourcearray = create_source_array(args[3]);
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
@@ -1163,45 +1163,49 @@
 		} else if ( typeof switchName == "number" ) {
 			switchName = 'SELF SWITCH ' + switchName;
 		}
-		if ( eval(cond) ) {
-			if ( Array.isArray(switchName) ) {
-				if ( Array.isArray(eventId) ) {
-					if ( Array.isArray(mapId) ) {
-						for ( var i = 0; i < switchName.length; i++ ) {
-							result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName[i]]));
-						}
-					} else {
-						for ( var i = 0; i < switchName.length; i++ ) {
-							result.push($gameSelfSwitches.value([mapId, eventId[i], switchName[i]]));
-						}
-					}					
-				} else if ( Array.isArray(mapId) ) {
-					for ( var i = 0; i < switchName.length; i++ ) {
+		if ( Array.isArray(switchName) ) {
+			for ( var i = 0; i < switchName.length; i++ ) {
+				if ( Array.isArray(sourcearray) ) {
+					eventId = sourcearray[i];
+					if ( Array.isArray(mapId) && eval(cond) ) {
 						result.push($gameSelfSwitches.value([mapId[i], eventId, switchName[i]]));
+					} else if ( eval(cond) ) {
+						result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
 					}
+				} else if ( Array.isArray(mapId) ) {
+					eventId = sourcearray;
+					if ( eval(cond) ) {
+						result.push($gameSelfSwitches.value([mapId[i], eventId, switchName[i]]));
+					}						
 				} else {
-					for ( var i = 0; i < switchName.length; i++ ) {
+					eventId = sourcearray;
+					if ( eval(cond) ) {
 						result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
 					}
 				}
-			} else if ( Array.isArray(eventId) ) {
-				if ( Array.isArray(mapId) ) {
-					for ( var i = 0; i < eventId.length; i++ ) {
-						result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName]));
-					}
-				} else {
-					for ( var i = 0; i < eventId.length; i++ ) {
-						result.push($gameSelfSwitches.value([mapId, eventId[i], switchName]));
-					}
+			}				
+		} else if ( Array.isArray(sourcearray) ) {
+			for ( var i = 0; i < sourcearray.length; i++ ) {
+				eventId = sourcearray[i];
+				if ( Array.isArray(mapId) && eval(cond) ) {
+					result.push($gameSelfSwitches.value([mapId[i], eventId, switchName]));
+				} else if ( eval(cond) ) {
+					result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
 				}
-			} else if ( Array.isArray(mapId) ) {
-				for ( var i = 0; i < mapId.length; i++ ) {
+			}
+		} else if ( Array.isArray(mapId) ) {
+			for ( var i = 0; i < mapId.length; i++ ) {
+				eventId = sourcearray;
+				if ( eval(cond) ) {
 					result.push($gameSelfSwitches.value([mapId[i], eventId, switchName]));
 				}
-			} else {
-				result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
 			}
-		};
+		} else {
+			eventId = sourcearray;
+			if ( eval(cond) ) {
+				result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
+			}				
+		}
 		counted_variables(result, countedNum, countedId);
 		return result;
 	};
@@ -1211,7 +1215,7 @@
 		var switchName = args[0];
 		var countedId = args[2];
 		var countedNum = args[1];
-		var eventId = create_source_array(args[3]);
+		var sourcearray = create_source_array(args[3]);
 		var mapId = get_mapId(args[4]);
 		var cond = args[5];	
 		var result = [];
@@ -1224,45 +1228,49 @@
 		} else if ( typeof switchName == "number" ) {
 			switchName = 'SELF VARIABLE ' + switchName;
 		};
-		if ( eval(cond) ) {
-			if ( Array.isArray(switchName) ) {
-				if ( Array.isArray(eventId) ) {
-					if ( Array.isArray(mapId) ) {
-						for ( var i = 0; i < switchName.length; i++ ) {
-							result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName[i]]));
-						}
-					} else {
-						for ( var i = 0; i < switchName.length; i++ ) {
-							result.push($gameSelfSwitches.value([mapId, eventId[i], switchName[i]]));
-						}
-					}					
-				} else if ( Array.isArray(mapId) ) {
-					for ( var i = 0; i < switchName.length; i++ ) {
+		if ( Array.isArray(switchName) ) {
+			for ( var i = 0; i < switchName.length; i++ ) {
+				if ( Array.isArray(sourcearray) ) {
+					eventId = sourcearray[i];
+					if ( Array.isArray(mapId) && eval(cond) ) {
 						result.push($gameSelfSwitches.value([mapId[i], eventId, switchName[i]]));
+					} else if ( eval(cond) ) {
+						result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
 					}
+				} else if ( Array.isArray(mapId) ) {
+					eventId = sourcearray;
+					if ( eval(cond) ) {
+						result.push($gameSelfSwitches.value([mapId[i], eventId, switchName[i]]));
+					}						
 				} else {
-					for ( var i = 0; i < switchName.length; i++ ) {
+					eventId = sourcearray;
+					if ( eval(cond) ) {
 						result.push($gameSelfSwitches.value([mapId, eventId, switchName[i]]));
 					}
 				}
-			} else if ( Array.isArray(eventId) ) {
-				if ( Array.isArray(mapId) ) {
-					for ( var i = 0; i < eventId.length; i++ ) {
-						result.push($gameSelfSwitches.value([mapId[i], eventId[i], switchName]));
-					}
-				} else {
-					for ( var i = 0; i < eventId.length; i++ ) {
-						result.push($gameSelfSwitches.value([mapId, eventId[i], switchName]));
-					}
+			}				
+		} else if ( Array.isArray(sourcearray) ) {
+			for ( var i = 0; i < sourcearray.length; i++ ) {
+				eventId = sourcearray[i];
+				if ( Array.isArray(mapId) && eval(cond) ) {
+					result.push($gameSelfSwitches.value([mapId[i], eventId, switchName]));
+				} else if ( eval(cond) ) {
+					result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
 				}
-			} else if ( Array.isArray(mapId) ) {
-				for ( var i = 0; i < mapId.length; i++ ) {
+			}
+		} else if ( Array.isArray(mapId) ) {
+			for ( var i = 0; i < mapId.length; i++ ) {
+				eventId = sourcearray;
+				if ( eval(cond) ) {
 					result.push($gameSelfSwitches.value([mapId[i], eventId, switchName]));
 				}
-			} else {
-				result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
 			}
-		};
+		} else {
+			eventId = sourcearray;
+			if ( eval(cond) ) {
+				result.push($gameSelfSwitches.value([mapId, eventId, switchName]));
+			}				
+		}
 		counted_variables(result, countedNum, countedId);
 		return result;
 	};
@@ -1338,13 +1346,13 @@
 		if ( Array.isArray(sourcearray) ) {
 			for (var i = 0; i < sourcearray.length; i++) {
 				var eventId = sourcearray[i];
-				if (eval(cond)) {
+				if ( eval(cond) ) {
 					namelist.push($dataMap.events[eventId].name);
 				}
 			};
 		} else {
 			var eventId = sourcearray;
-			if (eval(cond)) {
+			if ( eval(cond)) {
 				namelist.push($dataMap.events[eventId].name);
 			}
 		}		
@@ -1684,60 +1692,86 @@
 		};
 		if (SnIsArray) {
 			for (var i = 0; i < switchName.length; i++) {
-				if (valueIsArray && eval(cond)) {
+				if (valueIsArray) {
 					if (eIdIsArray) {
-						if (mIdIsArray) {
-							$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName[i]], value[i]);
-						} else {
-							$gameSelfSwitches.setValue([mapId, eventId[i], switchName[i]], value[i]);
+						eventId = source[i];
+						if (mIdIsArray && eval(cond)) {
+							$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
+						} else if ( eval(cond) ) {
+							$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]);
 						}
 					} else if (mIdIsArray) {
-						$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
+						eventId = source;
+						if ( eval(cond) ) {
+							$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value[i]);
+						} 
 					} else {
-						$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]);
+						eventId = source;
+						if ( eval(cond) ) {
+							$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value[i]);
+						}					
 					}
-				} else if (eIdIsArray && eval(cond)) {
-					if (mIdIsArray) {
-						$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName[i]], value);
-					} else {
-						$gameSelfSwitches.setValue([mapId, eventId[i], switchName[i]], value);
+				} else if (eIdIsArray) {
+					eventId = source[i];
+					if (mIdIsArray && eval(cond)) {
+						$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value);
+					} else if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value);
 					}
-				} else if (mIdIsArray && eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId, switchName[i]], value);
-				} else if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId, eventId, switchName[i]], value);
+				} else if (mIdIsArray) {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId[i], source, switchName[i]], value);
+					}					
+				} else {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, source, switchName[i]], value);
+					}				
 				}
 			}
 		} else if (valueIsArray) {
 			for (var i = 0; i < value.length; i++) {
-				if (eIdIsArray && eval(cond)) {
-					if (mIdIsArray) {
-						$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName], value[i]);
-					} else {
-						$gameSelfSwitches.setValue([mapId, eventId[i], switchName], value[i]);
+				if (eIdIsArray) {
+					eventId = source[i];
+					if (mIdIsArray && eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value[i]);
+					} else if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, eventId, switchName], value[i]);
 					}
-				} else if (mIdIsArray && eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value[i]);
-				} else if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId, eventId, switchName], value[i]);
+				} else if (mIdIsArray) {
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value[i]);
+					}					
+				} else{
+					eventId = source;
+					if ( eval(cond) ) {
+						$gameSelfSwitches.setValue([mapId, eventId, switchName], value[i]);
+					}					
 				}
 			}
 		} else if (eIdIsArray) {
-			for (var i = 0; i < eventId.length; i++) {
+			for (var i = 0; i < source.length; i++) {
+				eventId = source[i]; 
 				if (mIdIsArray && eval(cond)) {
-					$gameSelfSwitches.setValue([mapId[i], eventId[i], switchName], value);
+					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value);
 				} else if (eval(cond)) {
-					$gameSelfSwitches.setValue([mapId, eventId[i], switchName], value);
+					$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
 				}
 			}	
 		} else if (mIdIsArray) {
+			eventId = source;
 			for (var i = 0; i < mapId.length; i++) {
 				if (eval(cond)) {
 					$gameSelfSwitches.setValue([mapId[i], eventId, switchName], value);
 				}
 			}	
-		} else if (eval(cond)) {
-			$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
+		} else {
+			eventId = source;
+			if ( eval(cond) ) {
+				$gameSelfSwitches.setValue([mapId, eventId, switchName], value);
+			}			
 		}		
 	};
 	
