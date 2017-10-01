@@ -145,10 +145,6 @@
 		return search_name.apply(this, arguments);
 	};
 	
-	Game_Interpreter.prototype.recursion = function (name, source) {
-		return recursion(name, source);
-	};
-	
 	Game_Interpreter.prototype.SearchNotes = function () {
 		return search_note.apply(this, arguments);
 	};
