@@ -1488,7 +1488,7 @@
 						} 
 					} else {
 						eventId = source;
-						if ( eval(cond) ) { console.log([switchName[i], value[i]]);
+						if ( eval(cond) ) { 
 							$gameSelfVariables.setValue(mapId, eventId, switchName[i], value[i]);
 						}					
 					}
