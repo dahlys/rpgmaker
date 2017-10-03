@@ -622,7 +622,7 @@ function Select() {};
 	function select_itemCategory() {
 		var args = Array.prototype.slice.call(arguments);
 		var category = get_itemCategory(args[0]);
-		if (category == false) {return false;}
+		if (!category) {return false;}
 		if (Array.isArray(category)) {
 			for (var i = 0; i < category.length; i++) {
 				if (category[i] == args[1]) {
