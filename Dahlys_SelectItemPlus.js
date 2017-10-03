@@ -246,6 +246,7 @@ function Select() {};
 	function select_etype() {
 		var args = Array.prototype.slice.call(arguments);
 		var equipId = $gameVariables.value(args[0]);
+		if (!equipId) {return false;}
 		var etypeId = $dataArmors[equipId].etypeId;
 		var etypes = $dataSystem.equipTypes;
 		if (etypes[etypeId] == args[1]) {
@@ -258,6 +259,7 @@ function Select() {};
 	function select_atype() {
 		var args = Array.prototype.slice.call(arguments);
 		var armorId = $gameVariables.value(args[0]);
+		if (!armorId) {return false;}
 		var atypeId = $dataArmors[armorId].atypeId;
 		var atypes = $dataSystem.armorTypes;
 		if (atypes[atypeId] == args[1]) {
@@ -270,6 +272,7 @@ function Select() {};
 	function select_aPrice() {
 		var args = Array.prototype.slice.call(arguments);
 		var armorId = $gameVariables.value(args[0]);
+		if (!armorId) {return false;}
 		var price = $dataArmors[armorId].price;
 		switch (args[2]) {
 			case 'more':
@@ -305,6 +308,7 @@ function Select() {};
 	function select_aParam() {
 		var args = Array.prototype.slice.call(arguments);
 		var armorId = $gameVariables.value(args[0]);
+		if (!armorId) {return false;}
 		switch (args[1]) {
 			case 'mhp':
 				var param = $dataArmors[armorId].params[0];
@@ -364,6 +368,7 @@ function Select() {};
 	function select_wType() {
 		var args = Array.prototype.slice.call(arguments);
 		var weaponId = $gameVariables.value(args[0]);
+		if (!weaponId) {return false;}
 		var wtypeId = $dataWeapons[weaponId].wtypeId;
 		var wtypes = $dataSystem.weaponTypes;
 		if (wtypes[wtypeId] == args[1]) {
@@ -376,6 +381,7 @@ function Select() {};
 	function select_wPrice() {
 		var args = Array.prototype.slice.call(arguments);
 		var weaponId = $gameVariables.value(args[0]);
+		if (!weaponId) {return false;}
 		var price = $dataWeapons[weaponId].price;
 		switch (args[2]) {
 			case 'more':
@@ -411,6 +417,7 @@ function Select() {};
 	function select_wParam() {
 		var args = Array.prototype.slice.call(arguments);
 		var weaponId = $gameVariables.value(args[0]);
+		if (!weaponId) {return false;}
 		switch (args[1]) {
 			case 'mhp':
 				var param = $dataWeapons[weaponId].params[0];
@@ -470,6 +477,7 @@ function Select() {};
 	function select_wElement() {
 		var args = Array.prototype.slice.call(arguments);
 		var weaponId = $gameVariables.value(args[0]);
+		if (!weaponId) {return false;}
 		var elemental = $dataSystem.elements;
 		var traits = $dataWeapons[weaponId].traits;
 		for (var i = 0; i < traits.length; i++) {
@@ -488,6 +496,7 @@ function Select() {};
 	function select_itemName() {
 		var args = Array.prototype.slice.call(arguments);
 		var itemId = $gameVariables.value(args[0]);
+		if (!itemId) {return false;}
 		var itemName = $dataItems[itemId].name;
 		if (itemName.includes(args[1])) {
 			return true;
@@ -499,6 +508,7 @@ function Select() {};
 	function select_itemType() {
 		var args = Array.prototype.slice.call(arguments);
 		var itemId = $gameVariables.value(args[0]);
+		if (!itemId) {return false;}
 		var itypeId = $dataItems[itesmId].itypeId;
 		var type = args[1].toLowerCase();
 		switch (type) {
@@ -529,6 +539,7 @@ function Select() {};
 	function select_itemConsumable() {
 		var args = Array.prototype.slice.call(arguments);
 		var itemId = $gameVariables.value(args[0]);
+		if (!itemId) {return false;}
 		return $dataItems[itemId].consumable;
 	};
 	
@@ -536,6 +547,7 @@ function Select() {};
 	function select_itemElement() {
 		var args = Array.prototype.slice.call(arguments);
 		var itemId = $gameVariables.value(args[0]);
+		if (!itemId) {return false;}
 		var elementId = $dataItems[itemId].damage.elementId;
 		var elemental = $dataSystem.elements;
 		if (elemental[elementId] == args[1]) {
@@ -548,6 +560,7 @@ function Select() {};
 	function select_itemPrice() {
 		var args = Array.prototype.slice.call(arguments);
 		var itemId = $gameVariables.value(args[0]);
+		if (!itemId) {return false;}
 		var price = $dataItems[itemId].price;
 		switch (args[2]) {
 			case 'more':
@@ -583,6 +596,7 @@ function Select() {};
 	function get_itemCategory() {
 		var args = Array.prototype.slice.call(arguments);
 		var itemId = $gameVariables.value(args[0]);
+		if (!itemId) {return false;}
 		var notecontents = $dataItems[itemId].note;
 		var notearray = notecontents.split(/[\r\n]+/); 
 		var regex2 = /(?:<MENU CATEGORIES: )(.*)>/i;
@@ -608,6 +622,7 @@ function Select() {};
 	function select_itemCategory() {
 		var args = Array.prototype.slice.call(arguments);
 		var category = get_itemCategory(args[0]);
+		if (category) {return false;}
 		if (Array.isArray(category)) {
 			for (var i = 0; i < category.length; i++) {
 				if (category[i] == args[1]) {
