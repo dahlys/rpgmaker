@@ -113,7 +113,7 @@
 		var blocker = $gameMap.eventsXy(x2, y2)[0]; //get neighboring event		
 		var tlightIds = make_tfidarray(tfnames); //get ids of each type of traffic light
 		var blockNames = blocknames.split(","); //get map blocker names
-		var vehicleNames = vehicleName.split(",");
+		var vehicleNames = vehicleName.split(","); //get vehicle names
 		var regex = [];
 		for (var k = 0; k < vehicleNames.length; k++) {
 			regex.push(new RegExp(vehicleNames[i], 'i')); //case insensitive vehicle name matching
