@@ -79,11 +79,11 @@
 */	
 	
 	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass; //aliasing base canPass
-	Game_CharacterBase.prototype.canPass = function(x, y, d) {		
+	Game_CharacterBase.prototype.canPass = function(x, y, d) {
 		_Game_CharacterBase_canPass.call(this, x, y, d); //calling base canPass for plugin compatability
 		var x2 = $gameMap.roundXWithDirection(x, d);
 		var y2 = $gameMap.roundYWithDirection(y, d);
-		if (this.isCollidedWithEvents(x2, y2)) {
+		if ($gameMap.eventsXyNt(x2, y2).length > 0) {
 			return canPass_block(this, x2, y2); //hit an event
 		} else {
 			return _Game_CharacterBase_canPass.call(this, x, y, d); //hit anything else, return to original
@@ -98,8 +98,8 @@
 	
 	function canPass_block(obj, x2, y2) { 
 		var blocker = $gameMap.eventsXy(x2, y2)[0]; //get neighboring event		
-		var tlightIds = make_tfidarray(tfnames); //get ids of each type of traffic light
-		var blockNames = blocknames.split(","); //get map blocker names
+		var tlightIds = make_tfidarray(tfnames); console.log(tlightIds); //get ids of each type of traffic light
+		var blockNames = blocknames.split(","); console.log(blockNames); //get map blocker names
 		var vehicleNames = vehicleName.split(","); //get vehicle names
 		var regex = [];
 		for (var k = 0; k < vehicleNames.length; k++) {
@@ -139,7 +139,7 @@
 		var regex = new RegExp(name, 'i'); //case insensitive name matching
 		for (var eId = 1; eId < $dataMap.events.length; eId++) {
 			if ($dataMap.events[eId] != null) {
-				if ($dataMap.events[eId].name.match(regex)) {
+				if ($dataMap.events[eId].name.match(regex)) { console.log(eId);
 					return eId; //if event exists on map and the name matches, the function will return the eventId of the first match
 				}
 			}
@@ -147,7 +147,7 @@
 		return 0;
 	};
 	
-	function make_tfidarray(tfnames) {
+	function make_tfidarray(tfnames) { 
 		var tfnamearray = tfnames.split(","); //split traffic light names up using commas
 		var tfids = [];
 		for (var i = 0; i < tfnamearray.length; i++) {
