@@ -78,29 +78,16 @@
 ----------------------------------------------------------------------------------
 */	
 	
-	var originalcanPass = Game_CharacterBase.prototype.canPass; //overwriting base canPass
-	Game_CharacterBase.prototype.canPass = function(x, y, d) {	
-		originalcanPass.call(this); //overwriting base canPass
+	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass; //aliasing base canPass
+	Game_CharacterBase.prototype.canPass = function(x, y, d) {		
+		_Game_CharacterBase_canPass.call(this, x, y, d); //calling base canPass for plugin compatability
 		var x2 = $gameMap.roundXWithDirection(x, d);
 		var y2 = $gameMap.roundYWithDirection(y, d);
-		if (!$gameMap.isValid(x2, y2)) {
-			return false; //hit the edges of the map
-		}
-		if (this.isThrough() || this.isDebugThrough()) {
-			return true; //this event is set to Through
-		}
-		if (!this.isMapPassable(x, y, d)) {
-			return false; //hit a wall
-		}
-		if (this.isCollidedWithCharacters(x2, y2)) {
-			//THE FOLLOWING IF/ELSE STATEMENT IS THE ONLY CHANGE TO THIS FUNCTION
-			if (this.isCollidedWithEvents(x2, y2)) { 
-				return canPass_block(this, x2, y2); //hit an event
-			} else {			
-			return false; //hit a player vehicle
-			}
-		}
-		return true;	
+		if (this.isCollidedWithEvents(x2, y2)) {
+			return canPass_block(this, x2, y2); //hit an event
+		} else {
+			return _Game_CharacterBase_canPass.call(this, x, y, d); //hit anything else, return to original
+		}			
 	};
 
 /* 
@@ -169,4 +156,4 @@
 		return tfids; //array containing eventIds examples from each traffic light type
 	}
 		
-})();	
+})();
