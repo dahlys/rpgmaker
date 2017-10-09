@@ -318,21 +318,21 @@
 	BattleManager.endTurn = function() {
 		_BattleManager_endTurn.call(this);
 		//Daredevil - ends turn with < 10% hp
-		for (var i = 0; i < $gameParty.battleMembers().length; i++) {
-			if ($gameParty.battleMembers()[i].isAlive() && $gameParty.battleMembers()[i].hp/$gameParty.battleMembers()[i].mhp < lowHpFrac) {
-				$gameParty.battleMembers()[i]._daredevilErebus += 1;
+		for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+			if ($gameParty.aliveMembers()[i].hp/$gameParty.aliveMembers()[i].mhp < lowHpFrac) {
+				$gameParty.aliveMembers()[i]._daredevilErebus += 1;
 			}
 		}
 		//Caster - ends turn with < 10% mp
-		for (var i = 0; i < $gameParty.battleMembers().length; i++) {
-			if ($gameParty.battleMembers()[i].isAlive() && $gameParty.battleMembers()[i].mp/$gameParty.battleMembers()[i].mmp < lowHpFrac) {
-				$gameParty.battleMembers()[i]._casterErebus += 1;
+		for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+			if ($gameParty.aliveMembers()[i].mp/$gameParty.aliveMembers()[i].mmp < lowHpFrac) {
+				$gameParty.aliveMembers()[i]._casterErebus += 1;
 			}
 		}
 		//Victim - ends turn with status
-		for (var i = 0; i < $gameParty.battleMembers().length; i++) {
-			if ($gameParty.battleMembers()[i].isAlive() && $gameParty.battleMembers()[i].states().length > 0) {
-				$gameParty.battleMembers()[i]._victimErebus += 1;
+		for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+			if ($gameParty.aliveMembers()[i].states().length > 0) {
+				$gameParty.aliveMembers()[i]._victimErebus += 1;
 			}
 		}
 	};
@@ -358,17 +358,17 @@
 		if (target.isActor()) {
 			//Comrade - ally took damage
 			if (dmg > 0) {
-				for (var i = 0; i < $gameParty.battleMembers().length; i++) {
-					if (target != $gameParty.battleMembers()[i] && $gameParty.battleMembers()[i].isAlive()) {
-						$gameParty.battleMembers()[i]._comradeErebus += dmg;
+				for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+					if (target != $gameParty.aliveMembers()[i]) {
+						$gameParty.aliveMembers()[i]._comradeErebus += dmg;
 					}
 				}
 			}
 			//Avenger - ally was killed
 			if (target.hp <= 0) {
-				for (var i = 0; i < $gameParty.battleMembers().length; i++) {
-					if (target != $gameParty.battleMembers()[i] && $gameParty.battleMembers()[i].isAlive()) {
-						$gameParty.battleMembers()[i]._avengerErebus += 1;
+				for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+					if (target != $gameParty.aliveMembers()[i]) {
+						$gameParty.aliveMembers()[i]._avengerErebus += 1;
 					}
 				}
 			}
