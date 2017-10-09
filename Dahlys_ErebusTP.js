@@ -2,9 +2,18 @@
  * @plugindesc Erebus TP
  * @author Dahlys
  *
+ * @param TP Unlock Message
+ * @desc Message that displays upon TP mode unlock
+ * %1 = TP Mode Name, %2  = Actor Name
+ * @default TP Mode: %1 has been unlocked for %2
+ *
  * @param Low HP Fraction
  * @desc Fraction that signals low HP/MP
  * @default 0.1
+ *
+ * @param States Included
+ * @desc State IDs of bad status afflictions
+ * @default 4,5,6,7,8,9,10
  *
  * @param Comrade Unlock
  * @desc Value for actors to unlock Comrade
@@ -139,7 +148,13 @@
 */	
 	
 	var parameters = PluginManager.parameters('Dahlys_ErebusTP');
+	var tpUnlockMessage = String(parameters['TP Unlock Message']) || 'TP Mode: %1 has been unlocked for %2';
 	var lowHpFrac = Number(parameters['Low HP Fraction']) || 0.1;
+	var statesIncluded = String(parameters['States Included']) || '4,5,6,7,8,9,10';
+	statesIncluded = statesIncluded.split(',');
+	for (var i = 0; i < statesIncluded.length; i++) {
+		statesIncluded[i] = parseInt(statesIncluded[i]);
+	}
 	var warriorUnlock = Number(parameters['Warrior Unlock']) || 1;
 	var warriorTpModeNum = Number(parameters['Warrior TP Mode']) || 3;
 	var comradeUnlock = Number(parameters['Comrade Unlock']) || 1;
@@ -173,33 +188,36 @@
 	
 /* 
 ----------------------------------------------------------------------------------
-		UNLOCK TP MODES AUTOMATICALLY
+		UNLOCK TP MODES AT THE END OF BATTLE
 ----------------------------------------------------------------------------------
 */
+	function isUnlocked_Erebus(i, tpModeNum, unlockVal, varErebus) {
+		return !$gameActors.actor(i).unlockedErebus().some(function(tpid) {return tpid === tpModeNum;}) && varErebus >= unlockVal
+	};
 	
-	var _Scene_Map_update = Scene_Map.prototype.update;
-	Scene_Map.prototype.update = function() {
-		_Scene_Map_update.call(this);
-		unlockTpModes_Erebus();
+	function unlockTpMode_Erebus(i, str, tpModeNum) {
+		$gameActors.actor(i).unlockTpMode(tpModeNum);
+		$gameActors.actor(i)._unlockedErebus.push(tpModeNum);
+		$gameMessage.add(tpUnlockMessage.replace('%1', str).replace('%2', $gameActors.actor(i).name()));
 	};
 	
 	function unlockTpModes_Erebus() {
 		for (var i = 1; i < $gameActors._data.length; i++) {
-			if ($gameActors.actor(i).warriorErebus() >= warriorUnlock) $gameActors.actor(i).unlockTpMode(warriorTpModeNum);
-			if ($gameActors.actor(i).comradeErebus() >= comradeUnlock) $gameActors.actor(i).unlockTpMode(comradeTpModeNum);
-			if ($gameActors.actor(i).healerErebus() >= healerUnlock) $gameActors.actor(i).unlockTpMode(healerTpModeNum);
-			if ($gameActors.actor(i).breakerErebus() >= breakerUnlock) $gameActors.actor(i).unlockTpMode(breakerTpModeNum);
-			if ($gameActors.actor(i).boosterErebus() >= boosterUnlock) $gameActors.actor(i).unlockTpMode(boosterTpModeNum);
-			if ($gameActors.actor(i).slayerErebus() >= slayerUnlock) $gameActors.actor(i).unlockTpMode(slayerTpModeNum);
-			if ($gameActors.actor(i).avengerErebus() >= avengerUnlock) $gameActors.actor(i).unlockTpMode(avengerTpModeNum);
-			if ($gameActors.actor(i).victorErebus() >= victorUnlock) $gameActors.actor(i).unlockTpMode(victorTpModeNum);
-			if ($gameActors.actor(i).cowardErebus() >= cowardUnlock) $gameActors.actor(i).unlockTpMode(cowardTpModeNum);
-			if ($gameActors.actor(i).daredevilErebus() >= daredevilUnlock) $gameActors.actor(i).unlockTpMode(daredevilTpModeNum);
-			if ($gameActors.actor(i).casterErebus() >= casterUnlock) $gameActors.actor(i).unlockTpMode(casterTpModeNum);
-			if ($gameActors.actor(i).tacticianErebus() >= tacticianUnlock) $gameActors.actor(i).unlockTpMode(tacticianTpModeNum);
-			if ($gameActors.actor(i).victimErebus() >= victimUnlock) $gameActors.actor(i).unlockTpMode(victimTpModeNum);
-			if ($gameActors.actor(i).dancerErebus() >= dancerUnlock) $gameActors.actor(i).unlockTpMode(dancerTpModeNum);
-			if ($gameActors.actor(i).lonerErebus() >= lonerUnlock) $gameActors.actor(i).unlockTpMode(lonerTpModeNum);
+			if (isUnlocked_Erebus(i, warriorTpModeNum, warriorUnlock, $gameActors.actor(i).warriorErebus())) unlockTpMode_Erebus(i, 'Warrior', warriorTpModeNum);
+			if (isUnlocked_Erebus(i, comradeTpModeNum, comradeUnlock, $gameActors.actor(i).comradeErebus())) unlockTpMode_Erebus(i, 'Comrade', comradeTpModeNum);
+			if (isUnlocked_Erebus(i, healerTpModeNum, healerUnlock, $gameActors.actor(i).healerErebus())) unlockTpMode_Erebus(i, 'Healer', healerTpModeNum);			
+			if (isUnlocked_Erebus(i, breakerTpModeNum, breakerUnlock, $gameActors.actor(i).breakerErebus())) unlockTpMode_Erebus(i, 'Breaker', breakerTpModeNum);
+			if (isUnlocked_Erebus(i, boosterTpModeNum, boosterUnlock, $gameActors.actor(i).boosterErebus())) unlockTpMode_Erebus(i, 'Booster', boosterTpModeNum);
+			if (isUnlocked_Erebus(i, slayerTpModeNum, slayerUnlock, $gameActors.actor(i).slayerErebus())) unlockTpMode_Erebus(i, 'Slayer', slayerTpModeNum);
+			if (isUnlocked_Erebus(i, avengerTpModeNum, avengerUnlock, $gameActors.actor(i).avengerErebus())) unlockTpMode_Erebus(i, 'Avenger', avengerTpModeNum);
+			if (isUnlocked_Erebus(i, victorTpModeNum, victorUnlock, $gameActors.actor(i).victorErebus())) unlockTpMode_Erebus(i, 'Victor', victorTpModeNum);
+			if (isUnlocked_Erebus(i, cowardTpModeNum, cowardUnlock, $gameActors.actor(i).cowardErebus())) unlockTpMode_Erebus(i, 'Coward', cowardTpModeNum);
+			if (isUnlocked_Erebus(i, daredevilTpModeNum, daredevilUnlock, $gameActors.actor(i).daredevilErebus())) unlockTpMode_Erebus(i, 'Daredevil', daredevilTpModeNum);
+			if (isUnlocked_Erebus(i, casterTpModeNum, casterUnlock, $gameActors.actor(i).casterErebus())) unlockTpMode_Erebus(i, 'Caster', casterTpModeNum);
+			if (isUnlocked_Erebus(i, tacticianTpModeNum, tacticianUnlock, $gameActors.actor(i).tacticianErebus())) unlockTpMode_Erebus(i, 'Tactician', tacticianTpModeNum);
+			if (isUnlocked_Erebus(i, victimTpModeNum, victimUnlock, $gameActors.actor(i).victimErebus())) unlockTpMode_Erebus(i, 'Victim', victimTpModeNum);
+			if (isUnlocked_Erebus(i, dancerTpModeNum, dancerUnlock, $gameActors.actor(i).dancerErebus())) unlockTpMode_Erebus(i, 'Dancer', dancerTpModeNum);
+			if (isUnlocked_Erebus(i, lonerTpModeNum, lonerUnlock, $gameActors.actor(i).lonerErebus())) unlockTpMode_Erebus(i, 'Loner', lonerTpModeNum);
 		}
 	};
 
@@ -231,8 +249,14 @@
 		this._victimErebus = 0;
 		this._dancerErebus = 0;
 		this._lonerErebus = 0;
+		this._unlockedErebus = [0];
 	};
 	
+	Game_Actor.prototype.unlockedErebus = function() {
+		if (this._unlockedErebus === undefined) this.initErebusTpVariables();
+			return this._unlockedErebus;
+	};
+		
 	Game_Actor.prototype.warriorErebus = function() {
 		if (this._warriorErebus === undefined) this.initErebusTpVariables();
 			return this._warriorErebus;
@@ -311,7 +335,7 @@
 		
 /* 
 ----------------------------------------------------------------------------------
-		AUTORUN
+		INCREASE EREBUS TP VARIABLES
 ----------------------------------------------------------------------------------
 */	
 	var _BattleManager_endTurn = BattleManager.endTurn;
@@ -331,9 +355,9 @@
 		}
 		//Victim - ends turn with status
 		for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
-			if ($gameParty.aliveMembers()[i].states().length > 0) {
+			if ($gameParty.aliveMembers()[i].states().some(function(state) {return statesIncluded.indexOf(state.id) > -1;})) {
 				$gameParty.aliveMembers()[i]._victimErebus += 1;
-			}
+			}			
 		}
 	};
 	
@@ -341,34 +365,36 @@
 	Game_Action.prototype.executeHpDamage = function(target, value) { 
 		_Game_Action_executeHpDamage.call(this, target, value);
 		var dmg = target.result().hpDamage;
-		if (this.subject().isActor()) {
-			//Warrior - actor dealt damage
-			if (dmg > 0) {
-				this.subject()._warriorErebus += dmg;
-			}
-			//Healer - actor did healing
-			if (dmg < 0) {
-				this.subject()._healerErebus -= dmg;
-			}
-			//Slayer - actor killed target
-			if (target.hp <= 0) {
-				this.subject()._slayerErebus += 1;
-			}
-		}
-		if (target.isActor()) {
-			//Comrade - ally took damage
-			if (dmg > 0) {
-				for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
-					if (target != $gameParty.aliveMembers()[i]) {
-						$gameParty.aliveMembers()[i]._comradeErebus += dmg;
-					}
+		if ($gameParty.inBattle()) {
+			if (this.subject().isActor()) {
+				//Warrior - actor dealt damage
+				if (dmg > 0) {
+					this.subject()._warriorErebus += dmg;
+				}
+				//Healer - actor did healing
+				if (dmg < 0) {
+					this.subject()._healerErebus -= dmg;
+				}
+				//Slayer - actor killed target
+				if (target.hp <= 0) {
+					this.subject()._slayerErebus += 1;
 				}
 			}
-			//Avenger - ally was killed
-			if (target.hp <= 0) {
-				for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
-					if (target != $gameParty.aliveMembers()[i]) {
-						$gameParty.aliveMembers()[i]._avengerErebus += 1;
+			if (target.isActor()) {
+				//Comrade - ally took damage
+				if (dmg > 0) {
+					for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+						if (target != $gameParty.aliveMembers()[i]) {
+							$gameParty.aliveMembers()[i]._comradeErebus += dmg;
+						}
+					}
+				}
+				//Avenger - ally was killed
+				if (target.hp <= 0) {
+					for (var i = 0; i < $gameParty.aliveMembers().length; i++) {
+						if (target != $gameParty.aliveMembers()[i]) {
+							$gameParty.aliveMembers()[i]._avengerErebus += 1;
+						}
 					}
 				}
 			}
@@ -379,7 +405,7 @@
 	Game_Action.prototype.executeMpDamage = function(target, value) {
 		_Game_Action_executeMpDamage.call(this, target, value);
 		var mpdmg = target.result().mpDamage;
-		if (this.subject().isActor()) {	
+		if ($gameParty.inBattle() && this.subject().isActor()) {	
 			//Breaker - actor dealt mp damage
 			if (mpdmg > 0) {
 				this.subject()._breakerErebus += mpdmg;
@@ -390,7 +416,7 @@
 			}
 		}
 	};
-		
+	
 	var _BattleManager_endBattle = BattleManager.endBattle;
 	BattleManager.endBattle = function(result) {
 		_BattleManager_endBattle.call(this, result);
@@ -409,22 +435,23 @@
 				$gameParty.aliveMembers()[i]._cowardErebus += 1;
 			}
 		}
+		unlockTpModes_Erebus();
 	};
 	
 	var _Game_Action_apply = Game_Action.prototype.apply;
 	Game_Action.prototype.apply = function(target) {
 		_Game_Action_apply.call(this, target);
 		//Dancer - evaded an attack
-		if (target.result().evaded) {
+		if ($gameParty.inBattle() && target.result().evaded) {
 			this.subject()._dancerErebus += 1;
 		}
 	};
 	
-	var _Game_Action_itemEffectAddNormalState = Game_Action.prototype.itemEffectAddNormalState;
-	Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
-		_Game_Action_itemEffectAddNormalState.call(this, target, effect);
+	var _Game_Action_itemEffectAddState = Game_Action.prototype.itemEffectAddState;
+	Game_Action.prototype.itemEffectAddState = function(target, effect) {
+		_Game_Action_itemEffectAddState.call(this, target, effect);
 		//Tactician - inflicted a status condition
-		if (target.result().success) {
+		if ($gameParty.inBattle() && target.result().success && statesIncluded.some(function(s) {return s === effect.dataId})) {
 			this.subject()._tacticianErebus += 1;
 		}
 	};
