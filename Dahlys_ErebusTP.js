@@ -6,21 +6,22 @@
  * @desc Fraction that signals low HP/MP
  * @default 0.1
  *
- * @param Warrior Unlock
- * @desc Value for actors to unlock Warrior
- * @default 1
- *
- * @param Warrior TP Mode
- * @desc TP Mode ID for Warrior
- * @default 1
- *
  * @param Comrade Unlock
  * @desc Value for actors to unlock Comrade
  * @default 1
  *
  * @param Comrade TP Mode
  * @desc TP Mode ID for Comrade
- * @default 2
+ * @default 2 
+ *
+ * @param Warrior Unlock
+ * @desc Value for actors to unlock Warrior
+ * @default 1
+ *
+ * @param Warrior TP Mode
+ * @desc TP Mode ID for Warrior
+ * @default 3
+ *
  *
  * @param Healer Unlock
  * @desc Value for actors to unlock Healer
@@ -28,7 +29,7 @@
  *
  * @param Healer TP Mode
  * @desc TP Mode ID for Healer
- * @default 3
+ * @default 4
  *
  * @param Breaker Unlock
  * @desc Value for actors to unlock Breaker
@@ -36,7 +37,7 @@
  *
  * @param Breaker TP Mode
  * @desc TP Mode ID for Breaker
- * @default 4
+ * @default 5
  *
  * @param Booster Unlock
  * @desc Value for actors to unlock Booster
@@ -44,7 +45,7 @@
  *
  * @param Booster TP Mode
  * @desc TP Mode ID for Booster
- * @default 5
+ * @default 6
  *
  * @param Slayer Unlock
  * @desc Value for actors to unlock Slayer
@@ -52,7 +53,7 @@
  *
  * @param Slayer TP Mode
  * @desc TP Mode ID for Slayer
- * @default 6
+ * @default 7
  *
  * @param Avenger Unlock
  * @desc Value for actors to unlock Avenger
@@ -60,7 +61,7 @@
  *
  * @param Avenger TP Mode
  * @desc TP Mode ID for Avenger
- * @default 7
+ * @default 8
  *
  * @param Victor Unlock
  * @desc Value for actors to unlock Victor
@@ -68,7 +69,7 @@
  *
  * @param Victor TP Mode
  * @desc TP Mode ID for Victor
- * @default 8
+ * @default 9
  *
  * @param Coward Unlock
  * @desc Value for actors to unlock Coward
@@ -76,7 +77,7 @@
  *
  * @param Coward TP Mode
  * @desc TP Mode ID for Coward
- * @default 9
+ * @default 10
  *
  * @param Daredevil Unlock
  * @desc Value for actors to unlock Daredevil
@@ -84,7 +85,7 @@
  *
  * @param Daredevil TP Mode
  * @desc TP Mode ID for Daredevil
- * @default 10
+ * @default 11
  *
  * @param Caster Unlock
  * @desc Value for actors to unlock Caster
@@ -92,7 +93,7 @@
  *
  * @param Caster TP Mode
  * @desc TP Mode ID for Caster
- * @default 11
+ * @default 12
  *
  * @param Tactician Unlock
  * @desc Value for actors to unlock Tactician
@@ -100,7 +101,7 @@
  *
  * @param Tactician TP Mode
  * @desc TP Mode ID for Tactician
- * @default 12
+ * @default 13
  *
  * @param Victim Unlock
  * @desc Value for actors to unlock Victim
@@ -108,7 +109,7 @@
  *
  * @param Victim TP Mode
  * @desc TP Mode ID for Victim
- * @default 13
+ * @default 14
  *
  * @param Dancer Unlock
  * @desc Value for actors to unlock Dancer
@@ -116,7 +117,7 @@
  *
  * @param Dancer TP Mode
  * @desc TP Mode ID for Dancer
- * @default 14
+ * @default 15
  *
  * @param Loner Unlock
  * @desc Value for actors to unlock Loner
@@ -124,7 +125,7 @@
  *
  * @param Loner TP Mode
  * @desc TP Mode ID for Loner
- * @default 15
+ * @default 16
  *
  *
  */
@@ -140,35 +141,35 @@
 	var parameters = PluginManager.parameters('Dahlys_ErebusTP');
 	var lowHpFrac = Number(parameters['Low HP Fraction']) || 0.1;
 	var warriorUnlock = Number(parameters['Warrior Unlock']) || 1;
-	var warriorTpModeNum = Number(parameters['Warrior TP Mode']) || 1;
+	var warriorTpModeNum = Number(parameters['Warrior TP Mode']) || 3;
 	var comradeUnlock = Number(parameters['Comrade Unlock']) || 1;
 	var comradeTpModeNum = Number(parameters['Comrade TP Mode']) || 2;
 	var healerUnlock = Number(parameters['Healer Unlock']) || 1;
-	var healerTpModeNum = Number(parameters['Healer TP Mode']) || 3;
+	var healerTpModeNum = Number(parameters['Healer TP Mode']) || 4;
 	var breakerUnlock = Number(parameters['Breaker Unlock']) || 1;
-	var breakerTpModeNum = Number(parameters['Breaker TP Mode']) || 4;
+	var breakerTpModeNum = Number(parameters['Breaker TP Mode']) || 5;
 	var boosterUnlock = Number(parameters['Booster Unlock']) || 1;
-	var boosterTpModeNum = Number(parameters['Booster TP Mode']) || 5;
+	var boosterTpModeNum = Number(parameters['Booster TP Mode']) || 6;
 	var slayerUnlock = Number(parameters['Slayer Unlock']) || 1;
-	var slayerTpModeNum = Number(parameters['Slayer TP Mode']) || 6;
+	var slayerTpModeNum = Number(parameters['Slayer TP Mode']) || 7;
 	var avengerUnlock = Number(parameters['Avenger Unlock']) || 1;
-	var avengerTpModeNum = Number(parameters['Avenger TP Mode']) || 7;
+	var avengerTpModeNum = Number(parameters['Avenger TP Mode']) || 8;
 	var victorUnlock = Number(parameters['Victor Unlock']) || 1;
-	var victorTpModeNum = Number(parameters['Victor TP Mode']) || 8;
+	var victorTpModeNum = Number(parameters['Victor TP Mode']) || 9;
 	var cowardUnlock = Number(parameters['Coward Unlock']) || 1;
-	var cowardTpModeNum = Number(parameters['Coward TP Mode']) || 9;
+	var cowardTpModeNum = Number(parameters['Coward TP Mode']) || 10;
 	var daredevilUnlock = Number(parameters['Daredevil Unlock']) || 1;
-	var daredevilTpModeNum = Number(parameters['Daredevil TP Mode']) || 10;
+	var daredevilTpModeNum = Number(parameters['Daredevil TP Mode']) || 11;
 	var casterUnlock = Number(parameters['Caster Unlock']) || 1;
-	var casterTpModeNum = Number(parameters['Caster TP Mode']) || 11;
+	var casterTpModeNum = Number(parameters['Caster TP Mode']) || 12;
 	var tacticianUnlock = Number(parameters['Tactician Unlock']) || 1;
-	var tacticianTpModeNum = Number(parameters['Tactician TP Mode']) || 12;
+	var tacticianTpModeNum = Number(parameters['Tactician TP Mode']) || 13;
 	var victimUnlock = Number(parameters['Victim Unlock']) || 1;
-	var victimTpModeNum = Number(parameters['Victim TP Mode']) || 13;
+	var victimTpModeNum = Number(parameters['Victim TP Mode']) || 14;
 	var dancerUnlock = Number(parameters['Dancer Unlock']) || 1;
-	var dancerTpModeNum = Number(parameters['Dancer TP Mode']) || 14;
+	var dancerTpModeNum = Number(parameters['Dancer TP Mode']) || 15;
 	var lonerUnlock = Number(parameters['Loner Unlock']) || 1;
-	var lonerTpModeNum = Number(parameters['Loner TP Mode']) || 15;
+	var lonerTpModeNum = Number(parameters['Loner TP Mode']) || 16;
 	
 /* 
 ----------------------------------------------------------------------------------
