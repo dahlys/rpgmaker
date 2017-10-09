@@ -365,7 +365,7 @@
 	Game_Action.prototype.executeHpDamage = function(target, value) { 
 		_Game_Action_executeHpDamage.call(this, target, value);
 		var dmg = target.result().hpDamage;
-		if ($gameParty.inBattle()) {
+		if ($gameParty.inBattle() && this.isSkill()) {
 			if (this.subject().isActor()) {
 				//Warrior - actor dealt damage
 				if (dmg > 0) {
@@ -405,7 +405,7 @@
 	Game_Action.prototype.executeMpDamage = function(target, value) {
 		_Game_Action_executeMpDamage.call(this, target, value);
 		var mpdmg = target.result().mpDamage;
-		if ($gameParty.inBattle() && this.subject().isActor()) {	
+		if ($gameParty.inBattle() && this.isSkill() && this.subject().isActor()) {	
 			//Breaker - actor dealt mp damage
 			if (mpdmg > 0) {
 				this.subject()._breakerErebus += mpdmg;
@@ -451,7 +451,7 @@
 	Game_Action.prototype.itemEffectAddState = function(target, effect) {
 		_Game_Action_itemEffectAddState.call(this, target, effect);
 		//Tactician - inflicted a status condition
-		if ($gameParty.inBattle() && target.result().success && statesIncluded.some(function(s) {return s === effect.dataId})) {
+		if ($gameParty.inBattle() && this.isSkill() && target.result().success && statesIncluded.some(function(s) {return s === effect.dataId})) {
 			this.subject()._tacticianErebus += 1;
 		}
 	};
