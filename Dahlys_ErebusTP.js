@@ -422,7 +422,7 @@
 	
 	var _Game_Action_itemEffectAddNormalState = Game_Action.prototype.itemEffectAddNormalState;
 	Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
-		_Game_Action_itemEffectAddNormalState.call(this, target, effect); console.log(target);
+		_Game_Action_itemEffectAddNormalState.call(this, target, effect);
 		//Tactician - inflicted a status condition
 		if (target.result().success) {
 			this.subject()._tacticianErebus += 1;
