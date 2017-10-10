@@ -120,7 +120,7 @@
 					} else {
 						return true; //traffic light is GREEN, let it pass!
 					}
-				} else if (passerName === blockNames[i] || blockerName === blockNames[i]) { console.log('here');
+				} else if (passerName === blockNames[i] || blockerName === blockNames[i]) {
 					return true; //anyone but cars can pass through blocker
 				}
 			}			
