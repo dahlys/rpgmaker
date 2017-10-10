@@ -100,12 +100,31 @@
 		var tlightIds = make_tfidarray(tfnames); //get ids of each type of traffic light
 		var blockNames = blocknames.split(","); //get map blocker names
 		var vehicleNames = vehicleName.split(","); //get vehicle names
-		var regex = [];
-		for (var k = 0; k < vehicleNames.length; k++) {
+		var regex = [];  
+		for (var k = 0; k < vehicleNames.length; k++) { 
 			regex.push(new RegExp(vehicleNames[k], 'i')); //case insensitive vehicle name matching
 		}
-		var passerName = (obj._eventId && $dataMap.events[obj._eventId].name) ? $dataMap.events[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
-		var blockerName = (blocker._eventId && $dataMap.events[blocker._eventId].name) ? $dataMap.events[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
+		if (!obj || !blocker) {return false;}
+		if (obj._eventId) {
+			if ($gameMap.events()[obj._eventId].name) {
+				var passerName = $gameMap.events()[obj._eventId].name;
+			} else {
+				return false;
+			}
+		} else {
+			var passerName = $dataActors[1].name;
+		}
+		if (blocker._eventId) {
+			if ($gameMap.events()[blocker._eventId].name) {
+				var blockerName = $gameMap.events()[blocker._eventId].name;
+			} else {
+				return false;
+			}
+		} else {
+			var blockerName = $dataActors[1].name;
+		};
+		//var passerName = (obj._eventId && $gameMap.events()[obj._eventId].name) ? $gameMap.events()[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
+		//var blockerName = (blocker._eventId && $gameMap.events()[blocker._eventId].name) ? $gameMap.events()[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
 		for (var j = 0; j < regex.length; j++) {
 			for (var i = 0; i < tlightIds.length; i++) {
 				if ((blockerName.match(regex[j]) && passerName === blockNames[i]) || (blockerName === blockNames[i] && passerName.match(regex[j]))) { //car collided into blocker or blocker collided into car
@@ -136,10 +155,10 @@
 	
 	function search_name(name) {
 		var regex = new RegExp(name, 'i'); //case insensitive name matching
-		for (var eId = 1; eId < $dataMap.events.length; eId++) {
-			if ($dataMap.events[eId] != null) {
-				if ($dataMap.events[eId].name.match(regex)) {
-					return eId; //if event exists on map and the name matches, the function will return the eventId of the first match
+		for (var eId = 1; eId < $gameMap.events().length; eId++) {
+			if ($gameMap.events()[eId]) {
+				if ($gameMap.events()[eId].name) {
+					return ($gameMap.events()[eId].name.match(regex)) ? eId : 0; //if event exists on map and the name matches, the function will return the eventId of the first match
 				}
 			}
 		}
