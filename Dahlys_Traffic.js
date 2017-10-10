@@ -49,7 +49,7 @@
  *
  * Roadblock events with event names matching parameters Road Blocker Names have 
  * to be created and placed on the road. Vehicles will stop before this roadblock
- * when the lights are red. They should be blank and have priorty below 
+ * when the lights are red. They should be blank and have priorty same as 
  * characters.
  * e.g. Event Name: Block NS
  * Effect: When TL NS is RED, Block NS will block vehicles. Nothing else is 
@@ -74,16 +74,15 @@
 
 /* 
 ----------------------------------------------------------------------------------
-		OVERWRITE GAME FUNCTION .CANPASS
+		ALIAS CANPASS
 ----------------------------------------------------------------------------------
 */	
 	
 	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass; //aliasing base canPass
-	Game_CharacterBase.prototype.canPass = function(x, y, d) {
-		_Game_CharacterBase_canPass.call(this, x, y, d); //calling base canPass for plugin compatability
+	Game_CharacterBase.prototype.canPass = function(x, y, d) {		
 		var x2 = $gameMap.roundXWithDirection(x, d);
 		var y2 = $gameMap.roundYWithDirection(y, d);
-		if ($gameMap.eventsXyNt(x2, y2).length > 0) {
+		if (this.isCollidedWithEvents(x2, y2)) {
 			return canPass_block(this, x2, y2); //hit an event
 		} else {
 			return _Game_CharacterBase_canPass.call(this, x, y, d); //hit anything else, return to original
@@ -98,22 +97,22 @@
 	
 	function canPass_block(obj, x2, y2) { 
 		var blocker = $gameMap.eventsXy(x2, y2)[0]; //get neighboring event		
-		var tlightIds = make_tfidarray(tfnames); console.log(tlightIds); //get ids of each type of traffic light
-		var blockNames = blocknames.split(","); console.log(blockNames); //get map blocker names
+		var tlightIds = make_tfidarray(tfnames); //get ids of each type of traffic light
+		var blockNames = blocknames.split(","); //get map blocker names
 		var vehicleNames = vehicleName.split(","); //get vehicle names
 		var regex = [];
 		for (var k = 0; k < vehicleNames.length; k++) {
-			regex.push(new RegExp(vehicleNames[i], 'i')); //case insensitive vehicle name matching
+			regex.push(new RegExp(vehicleNames[k], 'i')); //case insensitive vehicle name matching
 		}
 		var passerName = (obj._eventId) ? $dataMap.events[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
-		var blockerName = (blocker._eventId) ? $dataMap.events[blocker._eventId].name : $dataActors[1].name;//set name of blocker to event2 name or player name	
+		var blockerName = (blocker._eventId) ? $dataMap.events[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
 		for (var j = 0; j < regex.length; j++) {
 			for (var i = 0; i < tlightIds.length; i++) {
 				if ((blockerName.match(regex[j]) && passerName === blockNames[i]) || (blockerName === blockNames[i] && passerName.match(regex[j]))) { //car collided into blocker or blocker collided into car
-					if ($gamePlayer.x === x2 && $gamePlayer.y === y2 && !$gamePlayer.isThrough()) {				
+					if ($gamePlayer.x === x2 && $gamePlayer.y === y2 && !$gamePlayer.isThrough()) {
 						return false; //failsafe in case player is standing on top of blocker
 					}
-					if ($gameMap.eventsXy(x2, y2).length > 1 && !$gameMap.eventsXy(x2, y2)[1].isThrough()) {				
+					if ($gameMap.eventsXy(x2, y2).length > 1 && !$gameMap.eventsXy(x2, y2)[1].isThrough()) {		
 						return false; //failsafe in case a non-through event is standing on top of blocker
 					}			
 					if ($gameSelfSwitches.value([$gameMap.mapId(), tlightIds[i], redSelfSw])) {
@@ -121,11 +120,11 @@
 					} else {
 						return true; //traffic light is GREEN, let it pass!
 					}
-				} else if (passerName === blockNames[i] || blockerName === blockNames[i]) { 
+				} else if (passerName === blockNames[i] || blockerName === blockNames[i]) { console.log('here');
 					return true; //anyone but cars can pass through blocker
 				}
 			}			
-		}		
+		}	
 		return false; //non-traffic related collision event		
 	}
 	
@@ -139,7 +138,7 @@
 		var regex = new RegExp(name, 'i'); //case insensitive name matching
 		for (var eId = 1; eId < $dataMap.events.length; eId++) {
 			if ($dataMap.events[eId] != null) {
-				if ($dataMap.events[eId].name.match(regex)) { console.log(eId);
+				if ($dataMap.events[eId].name.match(regex)) {
 					return eId; //if event exists on map and the name matches, the function will return the eventId of the first match
 				}
 			}
@@ -147,7 +146,7 @@
 		return 0;
 	};
 	
-	function make_tfidarray(tfnames) { 
+	function make_tfidarray(tfnames) {
 		var tfnamearray = tfnames.split(","); //split traffic light names up using commas
 		var tfids = [];
 		for (var i = 0; i < tfnamearray.length; i++) {
