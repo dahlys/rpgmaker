@@ -104,8 +104,8 @@
 		for (var k = 0; k < vehicleNames.length; k++) {
 			regex.push(new RegExp(vehicleNames[k], 'i')); //case insensitive vehicle name matching
 		}
-		var passerName = (obj._eventId) ? $dataMap.events[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
-		var blockerName = (blocker._eventId) ? $dataMap.events[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
+		var passerName = (obj._eventId && $dataMap.events[obj._eventId].name) ? $dataMap.events[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
+		var blockerName = (blocker._eventId && $dataMap.events[blocker._eventId].name) ? $dataMap.events[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
 		for (var j = 0; j < regex.length; j++) {
 			for (var i = 0; i < tlightIds.length; i++) {
 				if ((blockerName.match(regex[j]) && passerName === blockNames[i]) || (blockerName === blockNames[i] && passerName.match(regex[j]))) { //car collided into blocker or blocker collided into car
