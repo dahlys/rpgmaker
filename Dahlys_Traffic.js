@@ -104,7 +104,8 @@
 		for (var k = 0; k < vehicleNames.length; k++) { 
 			regex.push(new RegExp(vehicleNames[k], 'i')); //case insensitive vehicle name matching
 		}
-		if (!obj || !blocker) {return false;}
+		if (!obj || !$gameMap.events()[obj._eventId]) {return false;}
+		if (!blocker || $gameMap.events()[blocker._eventId]) {return false;}
 		if (obj._eventId) {
 			if ($gameMap.events()[obj._eventId].name) {
 				var passerName = $gameMap.events()[obj._eventId].name;
@@ -123,8 +124,6 @@
 		} else {
 			var blockerName = $dataActors[1].name;
 		};
-		//var passerName = (obj._eventId && $gameMap.events()[obj._eventId].name) ? $gameMap.events()[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
-		//var blockerName = (blocker._eventId && $gameMap.events()[blocker._eventId].name) ? $gameMap.events()[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
 		for (var j = 0; j < regex.length; j++) {
 			for (var i = 0; i < tlightIds.length; i++) {
 				if ((blockerName.match(regex[j]) && passerName === blockNames[i]) || (blockerName === blockNames[i] && passerName.match(regex[j]))) { //car collided into blocker or blocker collided into car
