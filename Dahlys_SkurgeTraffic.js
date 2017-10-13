@@ -194,8 +194,8 @@
 	function skurge_largeEventOnTrafficLight(x, y) {
 		//get coordinates of all parts of large event
 		var coordinates = [];
-		var topleft = [$gameMap.event(this._eventId).x - this._largeEventLeft, $gameMap.event(this._eventId).y - this._largeEventTop];
-		var downright = [$gameMap.event(this._eventId).x + this._largeEventRight, $gameMap.event(this._eventId).y + this._largeEventDown];
+		var topleft = [this.x - this._largeEventLeft, this.y - this._largeEventTop];
+		var downright = [this.x + this._largeEventRight, this.y + this._largeEventDown];
 		for (var j = 0; j < (1 + this._largeEventTop + this._largeEventDown); j++) {
 			for (var i = 0; i < (1 + this._largeEventLeft + this._largeEventRight); i++) {
 				coordinates.push([topleft[0] + i, topleft[1] + j]);
