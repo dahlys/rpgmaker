@@ -83,16 +83,7 @@
 		var x2 = $gameMap.roundXWithDirection(x, d);
 		var y2 = $gameMap.roundYWithDirection(y, d);
 		if (this.isCollidedWithEvents(x2, y2)) {
-			if ($gamePlayer.x === x2 && $gamePlayer.y === y2 && !$gamePlayer.isThrough()) {
-				return false; //failsafe in case player is standing on top of blocker
-			}					
-			if ($gameMap.eventsXy(x2, y2).length > 1 && !$gameMap.eventsXy(x2, y2)[1].isThrough()) {
-				var blocker = $gameMap.eventsXy(x2, y2)[1];
-			} else {
-				if (this._eventId && this.isCollidedWithSelf(x2, y2)) {return true;}
-				var blocker = $gameMap.eventsXy(x2, y2)[0];
-			}
-			return canPass_block(this, x2, y2, blocker); //hit an event
+			return canPass_block(this, x2, y2); //hit an event
 		} else {
 			return _Game_CharacterBase_canPass.call(this, x, y, d); //hit anything else, return to original
 		}			
@@ -104,47 +95,32 @@
 ----------------------------------------------------------------------------------
 */	
 	
-	function canPass_block(obj, x2, y2, blocker) { 
+	function canPass_block(obj, x2, y2) { 
+		var blocker = $gameMap.eventsXy(x2, y2)[0]; //get neighboring event		
 		var tlightIds = make_tfidarray(tfnames); //get ids of each type of traffic light
 		var blockNames = blocknames.split(","); //get map blocker names
 		var vehicleNames = vehicleName.split(","); //get vehicle names
-		var regex = [];  
-		for (var k = 0; k < vehicleNames.length; k++) { 
+		var regex = [];
+		for (var k = 0; k < vehicleNames.length; k++) {
 			regex.push(new RegExp(vehicleNames[k], 'i')); //case insensitive vehicle name matching
-		} 
-		if (!obj || !blocker) {return false;}
-		if (obj.isSpawnEvent || blocker.isSpawnEvent) {return false;}
-		if (obj._eventId) {
-			if (obj._eventId === blocker._eventId) {if (this.left + this.hitboxWidth) {};}
-			if ($dataMap.events[obj._eventId].name) {
-				var passerName = $dataMap.events[obj._eventId].name;
-			} else {
-				return false;
-			}
-		} else {
-			var passerName = $dataActors[1].name;
 		}
-		if (blocker._eventId) {
-			if (obj._eventId === blocker._eventId) {return true;}
-			if ($dataMap.events[blocker._eventId].name) {
-				var blockerName = $dataMap.events[blocker._eventId].name;
-			} else {
-				return false;
-			}
-		} else {
-			var blockerName = $dataActors[1].name;
-		};
+		var passerName = (obj._eventId) ? $dataMap.events[obj._eventId].name : $dataActors[1].name; //set name of passer to event1 name or player name
+		var blockerName = (blocker._eventId) ? $dataMap.events[blocker._eventId].name : $dataActors[1].name; //set name of blocker to event2 name or player name	
 		for (var j = 0; j < regex.length; j++) {
 			for (var i = 0; i < tlightIds.length; i++) {
-				if (blockerName.match(regex[j]) && passerName.match(regex[j])) {
-					return false;
-				} else if ((blockerName.match(regex[j]) && passerName === blockNames[i]) || (blockerName === blockNames[i] && passerName.match(regex[j]))) { //car collided into blocker or blocker collided into car
+				if ((blockerName.match(regex[j]) && passerName === blockNames[i]) || (blockerName === blockNames[i] && passerName.match(regex[j]))) { //car collided into blocker or blocker collided into car
+					if ($gamePlayer.x === x2 && $gamePlayer.y === y2 && !$gamePlayer.isThrough()) {
+						return false; //failsafe in case player is standing on top of blocker
+					}
+					if ($gameMap.eventsXy(x2, y2).length > 1 && !$gameMap.eventsXy(x2, y2)[1].isThrough()) {		
+						return false; //failsafe in case a non-through event is standing on top of blocker
+					}			
 					if ($gameSelfSwitches.value([$gameMap.mapId(), tlightIds[i], redSelfSw])) {
 						return false; //traffic light is RED, block it!
 					} else {
 						return true; //traffic light is GREEN, let it pass!
 					}
-				} else if (passerName === blockNames[i] || blockerName === blockNames[i]) {
+				} else if (passerName === blockNames[i] || blockerName === blockNames[i]) { console.log('here');
 					return true; //anyone but cars can pass through blocker
 				}
 			}			
@@ -161,11 +137,9 @@
 	function search_name(name) {
 		var regex = new RegExp(name, 'i'); //case insensitive name matching
 		for (var eId = 1; eId < $dataMap.events.length; eId++) {
-			if ($dataMap.events[eId]) {
-				if ($dataMap.events[eId].name) {
-					if ($dataMap.events[eId].name.match(regex)) {
-						return eId;
-					}//if event exists on map and the name matches, the function will return the eventId of the first match
+			if ($dataMap.events[eId] != null) {
+				if ($dataMap.events[eId].name.match(regex)) {
+					return eId; //if event exists on map and the name matches, the function will return the eventId of the first match
 				}
 			}
 		}
