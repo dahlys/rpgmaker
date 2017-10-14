@@ -414,43 +414,33 @@ Game_Event.prototype.getExtraDynamicSize = function() {
   return container;
 };
 
-// alias method to make event size check passage
+// DAHLYS EDIT, IMPROVED EFFICIENCY USING THIS SELF VARIABLES
 var est_event_size_Game_Event_canPass = Game_Event.prototype.canPass
 Game_Event.prototype.canPass = function(x, y, d) {
-  var chk =  est_event_size_Game_Event_canPass.call(this, x, y, d);
-  var allsize = $gameSystem._est_custom_passage_map[$gameMap._mapId][this._eventId]; 
-  allsize.forEach(function(size_string){
-    var size_array = JSON.parse(size_string); 
-    chk = chk && est_event_size_Game_Event_canPass.call(this, size_array[0], size_array[1], d);
-  },this);  
-	//DAHLYS ADDITION: Event collide with Large Event
-	var chk2 = false;
-	if (this.x === x && this.y === y) {
-		var chk2 = isLargeEventAhead.call(this, x, y, d);
-	}
-	return chk && !chk2;
-};
-
-	//DAHLYS ADDITION: Event collide with Large Event
-	function isLargeEventAhead(x, y, d) {
-		if (d === 2) {			
-			var tilesAheadToCheck = this._largeEventDown + 1;			
+	if (d === 2) {			
+			var canPassCheck = this._largeEventDown;
 		} else if (d === 4) {
-			var tilesAheadToCheck = this._largeEventLeft + 1;
+			var canPassCheck = this._largeEventLeft;
 		} else if (d === 6) {
-			var tilesAheadToCheck = this._largeEventRight + 1;
+			var canPassCheck = this._largeEventRight;
 		} else if (d === 8) {
-			var tilesAheadToCheck = this._largeEventTop + 1;
+			var canPassCheck = this._largeEventTop;
 		} else {
-			var tilesAheadToCheck = 1;
+			var canPassCheck = 0;
 		}
-		while (tilesAheadToCheck > 0) {
+		//move front of this event forward by event size
+		for (var i = 0; i < canPassCheck; i++) {
 			x = $gameMap.roundXWithDirection(x, d);
 			y = $gameMap.roundYWithDirection(y, d);	
-			tilesAheadToCheck -= 1;
 		}
-		return this.check_events_size(x, y);
-	};
+		//check default canPass tile in front
+		var chk1 = est_event_size_Game_Event_canPass.call(this, x, y, d);
+		//move to tile in front and check if there's a large event there
+		x = $gameMap.roundXWithDirection(x, d);
+		y = $gameMap.roundYWithDirection(y, d);	
+		var chk2 = this.check_events_size(x, y);
+		return chk1 && !chk2;
+};
 
 //  ============================== trigger part ===============================
 
