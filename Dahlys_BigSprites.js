@@ -396,7 +396,7 @@
 					this._bigSpriteType = 'circleB';
 					return;
 				}
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/\[.*\]/)) {
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \[.*\]/)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegexC.exec(comment);
 					this._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
@@ -405,7 +405,7 @@
 					this._bigSpriteType = 'custom';
 					return;
 				}
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/\d+ \d+ \d+/)) {
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \d+ \d+ \d+/)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegexA.exec(comment);
 					this._bigSpriteBack = Number(params[1]);
