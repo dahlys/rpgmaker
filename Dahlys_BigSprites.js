@@ -148,9 +148,9 @@
 
 	var _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
 	Game_Event.prototype.setupPageSettings = function() {
-		this.initializeBigSprite();
-		this.setupBigSprite();
 		_Game_Event_setupPageSettings.call(this);
+		this.initializeBigSprite();
+		this.setupBigSprite();		
 	};
 	
 	Game_Event.prototype.eventOccupancy = function() {
@@ -675,15 +675,15 @@
 			}
 		}
 		if (!this._bigSpriteType && !this._bigSpriteExType) {
-			coord.push({'x': this.x, 'y': this.y});			
+			coord.push({'x': this.x, 'y': this.y});
 		}
 		this._eventOccupancy.coordinates = coord;
 		return this._eventOccupancy.coordinates;
 	};
 	
-	Game_Event.prototype.updateEventCoordinates = function() {
+	Game_Event.prototype.updateEventCoordinates = function() { 
 		for (var i = 0; i < $gameMap._occupiedTiles.length; i++) {
-			if ($gameMap._occupiedTiles[i].event === this) {
+			if ($gameMap._occupiedTiles[i].event === this) { 
 				$gameMap._occupiedTiles[i] = this._eventOccupancy;
 				return;
 			}
@@ -726,21 +726,16 @@
 -------------------------------------------------------------------------------------------------------------------------------------------
 */	
 	
-	Game_CharacterBase.prototype.isEventHere = function(x, y) {
-		var eventHere = null;
-		for (var i = 0; i < $gameMap._occupiedTiles.length; i++) {
-			for (var j = 0; j < $gameMap._occupiedTiles[i].coordinates.length; j++) {
-				var x2 = $gameMap._occupiedTiles[i].coordinates[j].x;
-				var y2 = $gameMap._occupiedTiles[i].coordinates[j].y;
-				if (x === x2 && y === y2) {
-					eventHere = $gameMap._occupiedTiles[i].event; 
-					break;
-				}
-			}
+	var _Game_CharacterBase_pos = Game_CharacterBase.prototype.pos;
+	Game_CharacterBase.prototype.pos = function(x, y) {
+		if (!this._eventOccupancy) return _Game_CharacterBase_pos.call(this, x, y);
+		var coord = this._eventOccupancy.coordinates;
+		for (var i = 0; i < coord.length; i++) {
+			if (coord[i].x === x && coord[i].y === y) return true;
 		}
-		return this === eventHere ? null : eventHere;
-	}
-
+		return false;
+	};	
+	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
 		MOVE CHECKING TILES FORWARD FOR LARGE EVENT
@@ -757,7 +752,7 @@
 			else if (d === 2) var frontTiles = thisCoord.filter(function(tile) {return tile.y === y0 + forward;});
 			else if (d === 4) var frontTiles = thisCoord.filter(function(tile) {return tile.x === x0 - forward;});
 			else if (d === 6) var frontTiles = thisCoord.filter(function(tile) {return tile.x === x0 + forward;});
-		} else {
+		} else if (this._bigSpriteType) {
 			var minY = this.y;
 			var maxY = this.y;
 			var minX = this.x;
@@ -772,17 +767,39 @@
 			if (d === 4) var frontTiles = thisCoord.filter(function(tile) {return tile.x === minX});
 			if (d === 6) var frontTiles = thisCoord.filter(function(tile) {return tile.x === maxX});
 			if (d === 8) var frontTiles = thisCoord.filter(function(tile) {return tile.y === minY});
+		} else {
+			var frontTiles = [thisCoord[0].x, thisCoord[0].y]
 		}
-		if (frontTiles) {
-			for (var i = 0; i < frontTiles.length; i++) {
-				var x2 = $gameMap.roundXWithDirection(frontTiles[i].x, d);
-				var y2 = $gameMap.roundYWithDirection(frontTiles[i].y, d);
-				frontTiles[i] = {'x': x2, 'y': y2};
-			}
+		for (var i = 0; i < frontTiles.length; i++) {
+			var x2 = $gameMap.roundXWithDirection(frontTiles[i].x, d);
+			var y2 = $gameMap.roundYWithDirection(frontTiles[i].y, d);
+			frontTiles[i] = {'x': x2, 'y': y2};
 		}
 		return frontTiles;
 	};
-		
+	
+	Game_CharacterBase.prototype.checkDiagonalTiles = function(horz, vert) {	
+		var minY = this._bigSpriteY0;
+		var maxY = this._bigSpriteY0;
+		var minX = this.x;
+		var maxX = this.x;
+		var checkHorz = this.checkAheadTiles(horz);
+		for (var i = 0; i < checkHorz.length; i++) {
+			if (checkHorz[i].x < minX) minX = checkHorz[i].x;
+			if (checkHorz[i].x > maxX) maxX = checkHorz[i].x;
+		}
+		var checkVert = this.checkAheadTiles(vert);
+		for (var i = 0; i < checkVert.length; i++) {
+			if (checkVert[i].y < minY) minY = checkVert[i].y;
+			if (checkVert[i].y > maxY) maxY = checkVert[i].y;
+		}
+		if (horz === 4 && vert === 2) var diagTile = [{'x': minX, 'y': maxY}];
+		if (horz === 6 && vert === 2) var diagTile = [{'x': maxX, 'y': maxY}];
+		if (horz === 4 && vert === 8) var diagTile = [{'x': minX, 'y': minY}];
+		if (horz === 6 && vert === 8) var diagTile = [{'x': maxX, 'y': minY}];
+		return checkHorz.concat(checkVert, diagTile);
+	};
+	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
 		UPDATE EVENT SIZE
@@ -813,28 +830,25 @@
 			_Game_Character_turnTowardCharacter.call(this, character);
 		}
 	};
-	
+		
 	var _Game_CharacterBase_setDirection = Game_CharacterBase.prototype.setDirection;
 	Game_CharacterBase.prototype.setDirection = function(d) {
+		if (!$gameMap || !$gameMap.tileEvents) return _Game_CharacterBase_setDirection.call(this, d);
 		if (this._bigSpriteType) {
 			oldCoord = this._eventOccupancy.coordinates;
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
-			newCoord = this.setEventCoordinates();
+			newCoord = this.setEventCoordinates(); 
 			for (var i = 0; i < newCoord.length; i++) {
-				var destinationPassage = this.isMapPassable(newCoord[i].x, newCoord[i].y, 2) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 4) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 6) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 8)
+				var destinationPassage = this.isMapPassable(newCoord[i].x, newCoord[i].y, d)
 				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !destinationPassage || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					this._eventOccupancy.coordinates = oldCoord;
 					_Game_CharacterBase_setDirection.call(this, oldDir);
-					return false;
 				}
-			}
+			} 
 			this.updateEventCoordinates();
-			_Game_CharacterBase_setDirection.call(this, d);
-			return true;
 		} else {
 			_Game_CharacterBase_setDirection.call(this, d);
-			return true;
 		}	
 	};
 	
@@ -850,7 +864,8 @@
 	var _Game_Event_moveStraight = Game_Event.prototype.moveStraight;
 	Game_Event.prototype.moveStraight = function(d) {		
 		if (this._bigSpriteType) {
-			if (this.setDirection(d)) {
+			this.setDirection(d);
+			if (d === this._direction) { 
 				this.setMovementSuccess(this.canPass(this._x, this._y, d));			
 				if (this.isMovementSucceeded()) {
 					this._x = $gameMap.roundXWithDirection(this._x, d);
@@ -861,13 +876,19 @@
 					this.updateEventCoordinates();
 					this.increaseSteps();
 				} else {
+					this.setEventCoordinates();
+					this.updateEventCoordinates();
 					this.checkEventTriggerTouchFront(d);
 				} 
 			} else {
+				this.setEventCoordinates();
+				this.updateEventCoordinates();
 				this.checkEventTriggerTouchFront(this._direction);
 			}			
 		} else {
 			_Game_Event_moveStraight.call(this, d);
+			this.setEventCoordinates();
+			this.updateEventCoordinates();
 		}
 	};
 	
@@ -884,16 +905,21 @@
 				this.updateEventCoordinates();
 				this.increaseSteps();			
 			} else {
+				this.updateEventCoordinates();
 				this.checkEventTriggerTouchFront(this._direction);
 			}
 			if (this._direction === this.reverseDir(horz)) {
 				this.setDirection(horz);
+				this.updateEventCoordinates();
 			}
 			if (this._direction === this.reverseDir(vert)) {
 				this.setDirection(vert);
+				this.updateEventCoordinates();
 			}		
 		} else {
 			_Game_Event_moveDiagonally.call(this, horz, vert);
+			this.setEventCoordinates();
+			this.updateEventCoordinates();
 		}
 	};
 	
@@ -902,11 +928,15 @@
 		if (this._bigSpriteType) {
 			if (Math.abs(xPlus) > Math.abs(yPlus)) {
 				if (xPlus !== 0) {
-					var canTurn = this.setDirection(xPlus < 0 ? 4 : 6);
+					var d = xPlus < 0 ? 4 : 6;
+					this.setDirection(d);
+					var canTurn = d === this._direction;
 				}
 			} else {
 				if (yPlus !== 0) {
-					var canTurn = this.setDirection(yPlus < 0 ? 8 : 2);
+					var d = yPlus < 0 ? 8 : 2;
+					this.setDirection(d);
+					var canTurn = d === this._direction;
 				}
 			}
 			if (canTurn) {
@@ -936,6 +966,8 @@
 			}
 		} else {
 			_Game_Event_jump.call(this, xPlus, yPlus);
+			this.setEventCoordinates();
+			this.updateEventCoordinates();
 		}
 	};
 	
@@ -983,6 +1015,7 @@
 					return;
 				}
 			}
+			this.updateEventCoordinates();
 		} else if (character._bigSpriteType) {
 			var newX = character.x;
 			var newY = character._bigSpriteY0;
@@ -1007,8 +1040,12 @@
 					return;
 				}
 			}
+			this.setEventCoordinates();
+			this.updateEventCoordinates();
 		} else {
 			_Game_Character_swap.call(this, character);
+			this.setEventCoordinates();
+			this.updateEventCoordinates();
 		}
 	};
 	
@@ -1163,8 +1200,10 @@
 	var _Game_Player_startMapEvent = Game_Player.prototype.startMapEvent;
 	Game_Player.prototype.startMapEvent = function(x, y, triggers, normal) {
 		if (!$gameMap.isEventRunning()) {
-			var eventHere = this.isEventHere(x, y);
-			if (eventHere && eventHere.isTriggerIn(triggers) && eventHere.isNormalPriority() === normal) eventHere.start();
+			var eventHere = $gameMap.eventsXy(x, y);
+			for (var i = 0; i < eventHere.length; i++) {
+				if (!$gameMap.isEventRunning() && eventHere[i] && eventHere[i].isTriggerIn(triggers)) eventHere[i].start();
+			}
 		}
 	};
 	
@@ -1173,38 +1212,30 @@
 		CONFIGURE PASSABILITY
 -------------------------------------------------------------------------------------------------------------------------------------------
 */	
-	var Yanfly = Yanfly || {};
-	if(!Yanfly.Core) {
-		Game_Event.prototype.isCollidedWithEvents = function(x, y) {
-			var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
-			if (events.length <= 0) return false;
-			return this.isNormalPriority();
-		}
-	};
-	
 	var _Game_CharacterBase_isCollidedWithEvents = Game_CharacterBase.prototype.isCollidedWithEvents;
 	Game_CharacterBase.prototype.isCollidedWithEvents = function(x, y) {
-		var normal = _Game_CharacterBase_isCollidedWithEvents.call(this, x, y);
-		var eventHere = this.isEventHere(x, y);
-		if (eventHere && eventHere.isNormalPriority()) {
-			return true;
+		if (!this._eventId) return _Game_CharacterBase_isCollidedWithEvents.call(this, x, y);
+		if (!this.isNormalPriority())return false;
+		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
+		if (events.length <= 0) return false;	
+		for (var i = 0; i < events.length; i++) {
+			if (events[i] !== this) return true;
 		}
 		return false;
 	};
 	
-	var _Game_Event_isCollidedWithEvents = Game_Event.prototype.isCollidedWithEvents;
 	Game_Event.prototype.isCollidedWithEvents = function(x, y) {
-		var normal = _Game_Event_isCollidedWithEvents.call(this, x, y);
-		var eventHere = this.isEventHere(x, y); 
-		if (eventHere && eventHere.isNormalPriority()) {
-			return true;
+		if (!this.isNormalPriority())return false;
+		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
+		if (events.length <= 0) return false;	
+		for (var i = 0; i < events.length; i++) {
+			if (events[i] !== this) return true;
 		}
 		return false;
 	};
 	
 	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
 	Game_CharacterBase.prototype.canPass = function(x, y, d) {
-		var normal = _Game_CharacterBase_canPass.call(this, x, y, d);
 		if (this._eventId && this._bigSpriteType) {
 			var forwardTiles = this.checkAheadTiles(d);
 			for (var i = 0; i < forwardTiles.length; i++) {
@@ -1220,10 +1251,36 @@
 				if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) {
 					return false;
 				}
-			}
+			} 
 			return true;
 		}
-		return normal;
+		return _Game_CharacterBase_canPass.call(this, x, y, d);
+	};
+	
+	var _Game_CharacterBase_canPassDiagonally = Game_CharacterBase.prototype.canPassDiagonally;
+	Game_CharacterBase.prototype.canPassDiagonally = function(x, y, horz, vert) {
+		if (this._eventId && this._bigSpriteType) {
+			var tilesToCheck = this.checkDiagonalTiles(horz, vert);
+			for (var i = 0; i < tilesToCheck.length; i++) {
+				if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) {
+					return false;
+				}
+				if (this.isThrough() || this.isDebugThrough()) {
+					return true;
+				}
+				if (!this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz)) { 
+					return false;
+				}
+				if (!this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) { 
+					return false;
+				}
+				if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) {
+					return false;
+				}
+			} 
+			return true;
+		}
+		return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);		
 	};
 	
 	
