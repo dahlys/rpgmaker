@@ -1,7 +1,7 @@
 var _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
 Game_Event.prototype.setupPageSettings = function() {	
 	_Game_Event_setupPageSettings.call(this);
-	this.carShown = 0;
+	this._carShown = 0;
 };
 
 Game_Event.prototype.carShown = function() {
