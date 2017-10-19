@@ -1,18 +1,18 @@
 /*:
- * @plugindesc Big Event Sprites
+ * @plugindesc Big Sprites
  * @author Dahlys
  * 
  * @help
  * ==============================================================================
- *                               BIG EVENT SPRITES
+ *                                   BIG SPRITES
  * ==============================================================================
  * 
  * NOTE: I am following the map grid, so partially blocked tiles are not a thing.
  *
- * A 'solid' tile is a tile where the event EXISTS. It inherits the priority from
- * the main event (below/same/above player) and will be passable the same way.
- * Only solid tiles are triggerable. The main event tile does not have to be 
- * solid.
+ * A 'solid' tile is a tile where the character EXISTS. It inherits the priority 
+ * from the main character (below/same/above player) and will be passable the 
+ * same way. Only solid tiles are triggerable. The main character tile does not 
+ * have to be solid.
  *
  * Also, different kinds of big sprites are treated differently. These are the
  * categories:
@@ -23,12 +23,16 @@
  *    e.g. A flying spaghetti monster, a large warship
  * C) Complete customization of big sprite solidity based on direction faced.
  *
- * When an event turns or moves around, its size will be adjusted accordingly. A  
- * bigger event will also have a bigger action button/event touch/player touch 
- * trigger.
+ * When a character turns or moves around, its size will be adjusted accordingly. 
+ * A bigger character will also have a bigger action button/event touch/player 
+ * touch trigger.
  *
- * You can use comments to override notetags. The contents of the comments are 
- * the same as the relevant notetags.
+ * ------------------------------------------------------------------------------
+ *                                   FOR EVENTS
+ * ------------------------------------------------------------------------------
+ *
+ * For events, you can use comments to override notetags. The contents of the 
+ * comments are the same as the relevant notetags.
  *
  * When an event page is initialized, the event sprite size is set by notetag.
  * After that the event page is searched for the first bigSprite comment. If
@@ -46,23 +50,33 @@
  * 5 circle 2. This is good for transforming events!
  *
  * ------------------------------------------------------------------------------
+ *                                   FOR PLAYER
+ * ------------------------------------------------------------------------------
+ *
+ * When the character is the PLAYER, bigSprite is only triggered by
+ * running an event containing the appropriate comment. It's the same as using a
+ * plugin command, except it's a comment instead.
+ *
+ * ------------------------------------------------------------------------------
  *                                   CATEGORY A
  * ------------------------------------------------------------------------------
  * 
- * For category A, the event is expanded upwards and sideways but not downwards
- * since the default event tile is always at the middle bottom.
+ * For category A, the character is expanded upwards and sideways but not 
+ * downwards since the default character tile is always at the middle bottom.
  *
- * Notetag/Comment: <bigSprite: above left right>
+ * FOR PLAYER, Comment: <bigPlayer: above left right>
  *
- * e.g. <bigSprite: 1 1 1> creates a rectagle around the base event 1 tile
+ * FOR EVENT, Notetag/Comment: <bigEvent: above left right>
+ *
+ * e.g. <bigEvent: 1 1 1> creates a rectagle around the base event 1 tile
  * above, 1 tile to the left and 1 tile to the right to a total of 6 solid tiles.
  *
  * You can use more notes/comments to customize the shape, tile by tile.
  *
- * Notetag/Comment: <bigSpriteEx: dx,dy dx,dy dx,dy>
+ * Notetag/Comment: <bigEventEx: dx,dy dx,dy dx,dy>
  *  
  * e.g. 
- * Notetag: <bigSprite: 0 1 1> <bigSpriteEx: -1,-1 -1,-2> 
+ * Notetag: <bigEvent: 0 1 1> <bigEventEx: -1,-1 -1,-2> 
  * Event has a base rectangle 3 tiles long and 2 extra solid tiles: 1 and 2  
  * tiles above the main event and 1 tile to the left. The result of the 2 
  * commands is an L-shaped big event!
@@ -73,36 +87,44 @@
  *                                   CATEGORY B
  * ------------------------------------------------------------------------------
  *
- * For category B, the center of the event is shifted up to match the sprite.
+ * For category B, the center of the character is shifted up to match the sprite.
  * This makes it possible to make the default event tile passable. Hence, to
- * facilitate turning for such an event, the sprite box is highly reccomended to
- * be a square.
+ * facilitate turning for such an character, the sprite box is highly recommended 
+ * to be a square.
  *
- * Notetag/Comment: <bigSprite: spritesize front back left right>
+ * FOR PLAYER, Comment: <bigPlayer: spritesize front back left right>
+ *
+ * FOR EVENT, Notetag/Comment: <bigEvent: spritesize front back left right>
  * 
  * where spritesize, front, back, left, and right are numbers. 
- * e.g. <bigSprite: 7 1 1 1 0> shifts the center of the event 3 tiles up to 
+ * e.g. <bigEvent: 7 1 1 1 0> shifts the center of the event 3 tiles up to 
  * match the center of the big sprite image. It then adds 1 tile front, 1 tile 
  * back, and 1 to the left making the event occupy a rectangular space that is 
  * 2x3 tiles.
  *
- * Besides big rectangular events, big diamond-shaped events are also possible. 
- * The notetag for this is: 
+ * Besides big rectangular events, big diamond-shaped characters are also 
+ * possible. The notetag for this is: 
  *
- * Notetag/Comment: <bigSprite: spritesize diamond radius>
+ * FOR PLAYER, Comment: <bigPlayer: spritesize diamond radius>
  *
- * e.g. <bigSprite: 7 diamond 3> adds all tiles <= 3 tiles away to event size.
+ * FOR EVENT, Notetag/Comment: <bigEvent: spritesize diamond radius>
  *
- * You can also have a circular big event with notetag:
+ * e.g. <bigEvent: 7 diamond 3> adds all tiles <= 3 tiles away to event size.
  *
- * Notetag/Comment: <bigSprite: spritesize circle radius>
+ * You can also have a circular big character with notetag:
  *
- * e.g. <bigSprite: 7 circle 4> expands the event size by a radius of 4 tiles.
+ * FOR PLAYER, Comment: <bigPlayer: spritesize circle radius>
+ *
+ * FOR EVENT, Notetag/Comment: <bigEvent: spritesize circle radius>
+ *
+ * e.g. <bigEvent: 7 circle 4> expands the event size by a radius of 4 tiles.
  *
  * Extra tiles can be added to customize the shape. These tile coordinates are
  * measured relative to the new center, not the base event.
  *
- * Notetag/Comment: <bigSpriteEx: dx,dy dx,dy dx,dy>
+ * FOR PLAYER, Comment: <bigPlayerEx: dx,dy dx,dy dx,dy>
+ *
+ * FOR EVENT, Notetag/Comment: <bigEventEx: dx,dy dx,dy dx,dy>
  * 
  * ------------------------------------------------------------------------------
  *                                   CATEGORY C
@@ -114,25 +136,32 @@
  * Like category A, the default tile is not shifted and everything is relative to
  * the main tile.
  *
- * Notetag/Comment: <bigSprite: [down] [left] [right] [up]>
+ * FOR PLAYER, Comment: <bigPlayer: [down] [left] [right] [up]>
+ *
+ * FOR EVENT, Notetag/Comment: <bigEvent: [down] [left] [right] [up]>
  * where [direction] = [above left right]
  *
- * e.g. <bigSprite: [1 0 0] [0 1 1] [0 1 1] [1 0 0]> will create a big event that
+ * e.g. <bigEvent: [1 0 0] [0 1 1] [0 1 1] [1 0 0]> will create a big event that
  * is 2 tiles high when facing up/down, but 3 tiles wide when facing left/right.
  *
  * For even more customization, you can add tile by tile.
  *
- * Notetag/Commment: <bigSpriteEx: [down] [left] [right] [up]>
+ * FOR PLAYER, Comment: <bigPlayerEx: [down] [left] [right] [up]>
+ *
+ * FOR EVENT, Notetag/Commment: <bigEventEx: [down] [left] [right] [up]>
  * where [direction] = [dx,dy dx,dy dx,dy]
  * 
  * ------------------------------------------------------------------------------
- *                               BIG SPRITE EX ONLY
+ *                            BIG EVENT/PLAYER EX ONLY
  * ------------------------------------------------------------------------------
  *
  * bigSpriteEx used without bigSprite will default to Category B, but with the
  * event origin at the base tile. It will rotate when the sprite turns. To use
- * Category A type bigSpriteEx only, use a notetag/comment <bigSprite: 0 0 0>
- * before <bigSpriteEx: dx,dy dx,dy dx,dy>.
+ * Category A type bigSpriteEx only:
+ *
+ * FOR PLAYER, commment: <bigPlayer: 0 0 0> <bigPlayerEx: dx,dy dx,dy dx,dy>
+ *
+ * FOR EVENTS, notetag/comment <bigEvent: 0 0 0> <bigEventEx: dx,dy dx,dy dx,dy>
  *
  * Category C type bigSpriteEx can be used as is.
  *
@@ -219,12 +248,47 @@
 		return this._occupiedTiles;
 	};
 	
-/* 
--------------------------------------------------------------------------------------------------------------------------------------------
-		SETUP BIG EVENT
--------------------------------------------------------------------------------------------------------------------------------------------
-*/		
-
+	var _Game_Player_initialize = Game_Player.prototype.initialize;
+	Game_Player.prototype.initialize = function() {
+		_Game_Player_initialize.call(this);
+		this.initializeBigPlayer();
+		
+	};
+	
+	Game_Player.prototype.initializeBigPlayer = function() {
+		this._spriteSize = 1;
+		this._bigSpriteY0 = this.y;
+		this._bigSpriteType = null;
+		this._bigSpriteFront = 0;		
+		this._bigSpriteBack = 0;
+		this._bigSpriteLeft = 0;
+		this._bigSpriteRight = 0;
+		this._bigSpriteRadius = 0;
+		this._bigSpriteExCoord = null;
+		this._bigSpriteExType = null;
+		this._eventOccupancy = {'event': this, 'coordinates': []};
+	};
+	
+	var _Game_Vehicle_initialize = Game_Vehicle.prototype.initialize;
+	Game_Vehicle.prototype.initialize = function(type) {
+		_Game_Vehicle_initialize.call(this, type);
+		this.initializeBigVehicle();
+	};
+	
+	Game_Vehicle.prototype.initializeBigVehicle = function() {
+		this._spriteSize = 1;
+		this._bigSpriteY0 = this.y;
+		this._bigSpriteType = null;
+		this._bigSpriteFront = 0;		
+		this._bigSpriteBack = 0;
+		this._bigSpriteLeft = 0;
+		this._bigSpriteRight = 0;
+		this._bigSpriteRadius = 0;
+		this._bigSpriteExCoord = null;
+		this._bigSpriteExType = null;
+		this._eventOccupancy = {'event': this, 'coordinates': []};
+	};
+	
 	Game_Event.prototype.initializeBigSprite = function() {
 		this._spriteSize = 1;
 		this._bigSpriteY0 = this.y;
@@ -248,30 +312,136 @@
 		this.updateEventCoordinates();
 	};
 	
+/* 
+-------------------------------------------------------------------------------------------------------------------------------------------
+		SETUP BIG EVENT
+-------------------------------------------------------------------------------------------------------------------------------------------
+*/		
+	
 	var _Game_Interpreter_command108 = Game_Interpreter.prototype.command108;
 	Game_Interpreter.prototype.command108 = function() {
 		var result = _Game_Interpreter_command108.call(this);
 		var thisEvent = $gameMap.event(this._eventId);
 		for (var i = 0; i < this._comments.length; i++) {
-			if (this._comments[i].match(/bigSprite:/i)) {
-				thisEvent.executeBigSpriteComment(this._comments[i]);
-			}
-			if (this._comments[i].match(/bigSpriteEx:/i)) {
+			if (this._comments[i].match(/bigEventEx:/i)) {
 				thisEvent.executeBigSpriteExComment(this._comments[i]);
 			}
-			
+			if (this._comments[i].match(/bigEvent:/i)) {
+				thisEvent.executeBigSpriteComment(this._comments[i]);
+			}
+			if (this._comments[i].match(/bigPlayer:/i)) {
+				thisEvent.executeBigPlayerComment(this._comments[i]);
+			}
+			if (this._comments[i].match(/bigPlayerEx:/i)) {
+				thisEvent.executeBigPlayerExComment(this._comments[i]);
+			}
+			if (this._comments[i].match(/bigVehicle:/i)) {
+				thisEvent.executeBigVehicleComment(this._comments[i]);
+			}
 		}
 		return result;
 	};
 	
+	Game_Event.prototype.executeBigPlayerComment = function(comment) {
+		$gamePlayer.initializeBigPlayer();
+		var capturingRegexA = /(?:<bigPlayer: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
+		var capturingRegexB = /(?:<bigPlayer: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
+		var capturingRegexB2 = /(?:<bigPlayer: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
+		var capturingRegexB3 = /(?:<bigPlayer: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
+		var capturingRegexC = /(?:<bigPlayer: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
+		if (comment.match(/<bigPlayer: \d+ \d+ \d+ \d+ \d+>/i)) {
+			var params = capturingRegexB.exec(comment);
+			$gamePlayer._spriteSize = Number(params[1]);
+			$gamePlayer._bigSpriteFront = Number(params[2]);
+			$gamePlayer._bigSpriteBack = Number(params[3]);
+			$gamePlayer._bigSpriteLeft = Number(params[4]);
+			$gamePlayer._bigSpriteRight = Number(params[5]);
+			$gamePlayer._bigSpriteType = 'squareB';
+		} else if (comment.match(/<bigPlayer: \d+ diamond \d+>/i)) {
+			var params = capturingRegexB2.exec(comment); console.log(params);
+			$gamePlayer._spriteSize = Number(params[1]);
+			$gamePlayer._bigSpriteRadius = Number(params[2]);
+			$gamePlayer._bigSpriteType = 'diamondB';
+		} else if (comment.match(/<bigPlayer: \d+ circle \d+>/i)) {
+			var params = capturingRegexB3.exec(comment);
+			$gamePlayer._spriteSize = Number(params[1]);
+			$gamePlayer._bigSpriteRadius = Number(params[2]);
+			$gamePlayer._bigSpriteType = 'circleB';
+		} else if (comment.match(/<bigPlayer: \[.*\]>/i)) {
+			var params = capturingRegexC.exec(comment);	
+			$gamePlayer._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
+			$gamePlayer._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
+			$gamePlayer._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
+			$gamePlayer._bigSpriteType = 'custom';
+		} else if (comment.match(/<bigPlayer: \d+ \d+ \d+>/i)) {
+			var params = capturingRegexA.exec(comment);
+			$gamePlayer._bigSpriteBack = Number(params[1]);
+			$gamePlayer._bigSpriteLeft = Number(params[2]);
+			$gamePlayer._bigSpriteRight = Number(params[3]);
+			$gamePlayer._bigSpriteType = 'squareA';
+		}
+		$gamePlayer.setEventCoordinates();
+		$gamePlayer.updateEventCoordinates();
+	};
+	
+	Game_Event.prototype.executeBigPlayerExComment = function(comment) {
+		$gamePlayer._bigSpriteExCoord = null;
+		$gamePlayer._bigSpriteExType = null;
+		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
+		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
+		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
+		if (comment.match(/\[.*\]/)) {
+			var params = capturingRegexC.exec(comment);
+			var coord = {'down': [], 'left': [], 'right': [], 'up': []};
+			if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			$gamePlayer._bigSpriteExCoord = coord;
+			$gamePlayer._bigSpriteExType = 'C';
+		}
+		if (comment.match(/(\d+|-\d+),(\d+|-\d+)/)) {
+			var coord = [];
+			do {
+				var match = capturingRegexA.exec(comment);
+				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+			} while (match);
+			$gamePlayer._bigSpriteExCoord = coord;
+			if ($gamePlayer._bigSpriteType === 'squareA') $gamePlayer._bigSpriteExType = 'A';
+			else $gamePlayer._bigSpriteExType = 'B';
+		}
+		$gamePlayer.setEventCoordinates();
+		$gamePlayer.updateEventCoordinates();
+	};
+	
 	Game_Event.prototype.executeBigSpriteComment = function(comment) {
 		this.initializeBigSprite();
-		var capturingRegexA = /(?:<bigSprite: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
-		var capturingRegex = /(?:<bigSprite: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
-		var capturingRegex2 = /(?:<bigSprite: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
-		var capturingRegex3 = /(?:<bigSprite: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
-		var capturingRegexC = /(?:<bigSprite: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
-		if (comment.match(/<bigSprite: \d+ \d+ \d+ \d+ \d+>/i)) {
+		var capturingRegexA = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
+		var capturingRegex = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
+		var capturingRegex2 = /(?:<bigEvent: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
+		var capturingRegex3 = /(?:<bigEvent: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
+		var capturingRegexC = /(?:<bigEvent: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
+		if (comment.match(/<bigEvent: \d+ \d+ \d+ \d+ \d+>/i)) {
 			var params = capturingRegex.exec(comment);
 			this._spriteSize = Number(params[1]);
 			this._bigSpriteFront = Number(params[2]);
@@ -279,24 +449,23 @@
 			this._bigSpriteLeft = Number(params[4]);
 			this._bigSpriteRight = Number(params[5]);
 			this._bigSpriteType = 'squareB';
-		} else if (comment.match(/<bigSprite: \d+ diamond \d+>/i)) {
+		} else if (comment.match(/<bigEvent: \d+ diamond \d+>/i)) {
 			var params = capturingRegex2.exec(comment);
 			this._spriteSize = Number(params[1]);
 			this._bigSpriteRadius = Number(params[2]);
 			this._bigSpriteType = 'diamondB';
-		} else if (comment.match(/<bigSprite: \d+ circle \d+>/i)) {
+		} else if (comment.match(/<bigEvent: \d+ circle \d+>/i)) {
 			var params = capturingRegex3.exec(comment);
 			this._spriteSize = Number(params[1]);
 			this._bigSpriteRadius = Number(params[2]);
 			this._bigSpriteType = 'circleB';
-		} else if (comment.match(/<bigSprite: \[.*\]>/)) {
+		} else if (comment.match(/<bigEvent: \[.*\]>/)) {
 			var params = capturingRegexC.exec(comment);
 			this._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
 			this._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
 			this._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
 			this._bigSpriteType = 'custom';
-			return;
-		} else if (comment.match(/<bigSprite: \d+ \d+ \d+>/)) {
+		} else if (comment.match(/<bigEvent: \d+ \d+ \d+>/)) {
 			var params = capturingRegexA.exec(comment);
 			this._bigSpriteBack = Number(params[1]);
 			this._bigSpriteLeft = Number(params[2]);
@@ -360,11 +529,11 @@
 	
 	Game_Event.prototype.setSpriteSizeFromPageComment = function() {		
 		var pagelist = this.list();
-		var capturingRegexA = /(?:<bigSprite: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
-		var capturingRegex = /(?:<bigSprite: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
-		var capturingRegex2 = /(?:<bigSprite: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
-		var capturingRegex3 = /(?:<bigSprite: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
-		var capturingRegexC = /(?:<bigSprite: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
+		var capturingRegexA = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
+		var capturingRegex = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
+		var capturingRegex2 = /(?:<bigEvent: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
+		var capturingRegex3 = /(?:<bigEvent: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
+		var capturingRegexC = /(?:<bigEvent: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
 		
 		var capturingRegexA2 = /(\d+|-\d+),(\d+|-\d+)/g
 		var capturingRegexC2 = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
@@ -373,8 +542,8 @@
 		for (var i = 0; i < pagelist.length; i++) {
 			var parameters = pagelist[i].parameters;
 			for (var j = 0; j < parameters.length; j++) {
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite reset>/i)) this.initializeBigSprite();
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \d+ \d+ \d+ \d+ \d+>/i)) {
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent reset>/i)) this.initializeBigSprite();
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+ \d+ \d+>/i)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegex.exec(comment);
 					this._spriteSize = Number(params[1]);
@@ -383,26 +552,26 @@
 					this._bigSpriteLeft = Number(params[4]);
 					this._bigSpriteRight = Number(params[5]);
 					this._bigSpriteType = 'squareB';					
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \d+ diamond \d+>/i)) {
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ diamond \d+>/i)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegex2.exec(comment);
 					this._spriteSize = Number(params[1]);
 					this._bigSpriteRadius = Number(params[2]);
 					this._bigSpriteType = 'diamondB';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \d+ circle \d+>/i)) {
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ circle \d+>/i)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegex3.exec(comment);
 					this._spriteSize = Number(params[1]);
 					this._bigSpriteRadius = Number(params[2]);
 					this._bigSpriteType = 'circleB';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \[.*\]/)) {
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \[.*\]/)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegexC.exec(comment);
 					this._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
 					this._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
 					this._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
 					this._bigSpriteType = 'custom';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSprite: \d+ \d+ \d+/)) {
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+/)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegexA.exec(comment);
 					this._bigSpriteBack = Number(params[1]);
@@ -410,7 +579,7 @@
 					this._bigSpriteRight = Number(params[3]);
 					this._bigSpriteType = 'squareA';
 				}	
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSpriteEx: \[.*\]/)) {
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: \[.*\]/)) {
 					var comment = pagelist[i].parameters;
 					var params = capturingRegexC2.exec(comment);
 					var coord = {'down': [], 'left': [], 'right': [], 'up': []};
@@ -440,7 +609,7 @@
 					}
 					this._bigSpriteExCoord = coord;
 					this._bigSpriteExType = 'C';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigSpriteEx: (\d+|-\d+),(\d+|-\d+)/)) {
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: (\d+|-\d+),(\d+|-\d+)/)) {
 					var comment = pagelist[i].parameters;
 					var coord = [];
 					do {
@@ -560,7 +729,7 @@
 		}
 	};
 	
-	Game_Event.prototype.setEventCoordinates = function() {
+	Game_Character.prototype.setEventCoordinates = function() {
 		this._bigSpriteY0 = this.y - Math.floor(this._spriteSize / 2);
 		var coord = [];
 		if (this._bigSpriteType === 'squareB') {
@@ -682,7 +851,7 @@
 		return this._eventOccupancy.coordinates;
 	};
 	
-	Game_Event.prototype.updateEventCoordinates = function() { 
+	Game_CharacterBase.prototype.updateEventCoordinates = function() { 
 		for (var i = 0; i < $gameMap._occupiedTiles.length; i++) {
 			if ($gameMap._occupiedTiles[i].event === this) { 
 				$gameMap._occupiedTiles[i] = this._eventOccupancy;
@@ -692,7 +861,7 @@
 		$gameMap._occupiedTiles.push(this._eventOccupancy);
 	};
 	
-	Game_Event.prototype.getTypeBOccupancy = function() {
+	Game_Character.prototype.getTypeBOccupancy = function() {
 		var up = 0;
 		var down = 0;
 		var left = 0;
@@ -803,7 +972,7 @@
 			oldCoord = this._eventOccupancy.coordinates; 
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
-			newCoord = this.setEventCoordinates(); if (this._eventId === 20 && d === 2) {console.log(newCoord)};
+			newCoord = this.setEventCoordinates(); 
 			for (var i = 0; i < newCoord.length; i++) {
 				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					this._eventOccupancy.coordinates = oldCoord;
@@ -1146,7 +1315,7 @@
 	
 	var _Game_CharacterBase_checkEventTriggerTouchFront = Game_CharacterBase.prototype.checkEventTriggerTouchFront;
 	Game_CharacterBase.prototype.checkEventTriggerTouchFront = function(d) {
-		if (this._eventId && this._bigSpriteType) {
+		if (this._bigSpriteType) {
 			var forwardTiles = this.checkAheadTiles(d);
 			if (forwardTiles) {
 				for (var i = 0; i < forwardTiles.length; i++) {
@@ -1161,11 +1330,29 @@
 	var _Game_Player_startMapEvent = Game_Player.prototype.startMapEvent;
 	Game_Player.prototype.startMapEvent = function(x, y, triggers, normal) {
 		if (!$gameMap.isEventRunning()) {
-			var eventHere = $gameMap.eventsXy(x, y); console.log(eventHere);
+			var eventHere = $gameMap.eventsXy(x, y); 
 			for (var i = 0; i < eventHere.length; i++) {
 				if (!$gameMap.isEventRunning() && eventHere[i] && eventHere[i].isTriggerIn(triggers)) eventHere[i].start();
 			}
 		}
+	};
+	
+	var _Game_Player_moveByInput = Game_Player.prototype.moveByInput;
+	Game_Player.prototype.moveByInput = function() {
+		_Game_Player_moveByInput.call(this);
+		this.setEventCoordinates();
+		this.updateEventCoordinates();
+	};
+	
+	var _Game_Player_checkEventTriggerThere = Game_Player.prototype.checkEventTriggerThere;
+	Game_Player.prototype.checkEventTriggerThere = function(triggers) {
+		if (this.canStartLocalEvents() && this._bigSpriteType) {
+			var d = this.direction();
+			var forwardTiles = this.checkAheadTiles(d);
+			for (var i = 0; i < forwardTiles.length; i++) {
+				this.startMapEvent(forwardTiles[i].x, forwardTiles[i].y, triggers, true);
+			}			
+		} else _Game_Player_checkEventTriggerThere.call(this, triggers);
 	};
 	
 /* 
@@ -1173,12 +1360,10 @@
 		CONFIGURE PASSABILITY
 -------------------------------------------------------------------------------------------------------------------------------------------
 */	
-	var _Game_CharacterBase_isCollidedWithEvents = Game_CharacterBase.prototype.isCollidedWithEvents;
 	Game_CharacterBase.prototype.isCollidedWithEvents = function(x, y) {
-		if (!this._eventId) return _Game_CharacterBase_isCollidedWithEvents.call(this, x, y);
-		if (!this.isNormalPriority())return false;
+		if (!this.isNormalPriority()) return false;
 		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
-		if (events.length <= 0) return false;	
+		if (events.length <= 0) return false;
 		for (var i = 0; i < events.length; i++) {
 			if (events[i] !== this) return true;
 		}
@@ -1197,8 +1382,8 @@
 	
 	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
 	Game_CharacterBase.prototype.canPass = function(x, y, d) {
-		if (this._eventId && this._bigSpriteType) {
-			var forwardTiles = this.checkAheadTiles(d);
+		if (this._bigSpriteType) {
+			var forwardTiles = this.checkAheadTiles(d); 
 			for (var i = 0; i < forwardTiles.length; i++) {
 				if (!$gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y)) {
 					return false;
@@ -1206,7 +1391,7 @@
 				if (this.isThrough() || this.isDebugThrough()) {
 					return true;
 				}
-				if (!this.isMapPassable(forwardTiles[i].x, forwardTiles[i].y, d)) { 
+				if (!$gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, d)) { 
 					return false;
 				}
 				if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) {
@@ -1229,12 +1414,12 @@
 				if (this.isThrough() || this.isDebugThrough()) {
 					return true;
 				}
-				if (!this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz)) { 
+				if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz)) { 
 					return false;
 				}
-				if (!this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) { 
+				if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) { 
 					return false;
-				}
+				} 
 				if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) {
 					return false;
 				}
