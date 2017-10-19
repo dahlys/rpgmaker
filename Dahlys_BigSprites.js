@@ -456,6 +456,7 @@
 	};
 	
 	Game_Event.prototype.setSpriteSizeFromEventNote = function() {
+		if (this.isSpawnEvent) return;
 		var note = $dataMap.events[this._eventId].meta.bigSprite;
 		if (!note) return;		
 		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/
@@ -511,6 +512,7 @@
 	};
 	
 	Game_Event.prototype.setSpriteExSizeFromEventNote = function() {
+		if (this.isSpawnEvent) return;
 		var note = $dataMap.events[this._eventId].meta.bigSpriteEx;
 		if (!note) return;
 		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
@@ -561,7 +563,6 @@
 	Game_Event.prototype.setEventCoordinates = function() {
 		this._bigSpriteY0 = this.y - Math.floor(this._spriteSize / 2);
 		var coord = [];
-		if (this.isThrough()) return;
 		if (this._bigSpriteType === 'squareB') {
 			var occupancy = this.getTypeBOccupancy();
 			var topleft = [this.x - occupancy.left, this._bigSpriteY0 - occupancy.up];
@@ -743,61 +744,25 @@
 */
 	
 	Game_CharacterBase.prototype.checkAheadTiles = function(d) {		
-		var thisCoord = this._eventOccupancy.coordinates;		
-		if (this._bigSpriteType && this._bigSpriteType.includes('B') || this._bigSpriteExType === 'B') {
-			var x0 = this.x;
-			var y0 = this._bigSpriteY0;
-			var forward = this._bigSpriteFront;
-			if (d === 8) var frontTiles = thisCoord.filter(function(tile) {return tile.y === y0 - forward;});
-			else if (d === 2) var frontTiles = thisCoord.filter(function(tile) {return tile.y === y0 + forward;});
-			else if (d === 4) var frontTiles = thisCoord.filter(function(tile) {return tile.x === x0 - forward;});
-			else if (d === 6) var frontTiles = thisCoord.filter(function(tile) {return tile.x === x0 + forward;});
-		} else if (this._bigSpriteType) {
-			var minY = this.y;
-			var maxY = this.y;
-			var minX = this.x;
-			var maxX = this.x;
-			for (var i = 0; i < thisCoord.length; i++) {
-				if (thisCoord[i].x < minX) minX = thisCoord[i].x;
-				if (thisCoord[i].x > maxX) maxX = thisCoord[i].x;
-				if (thisCoord[i].y < minY) minY = thisCoord[i].y;
-				if (thisCoord[i].y > maxY) maxY = thisCoord[i].y;
-			}
-			if (d === 2) var frontTiles = thisCoord.filter(function(tile) {return tile.y === maxY});
-			if (d === 4) var frontTiles = thisCoord.filter(function(tile) {return tile.x === minX});
-			if (d === 6) var frontTiles = thisCoord.filter(function(tile) {return tile.x === maxX});
-			if (d === 8) var frontTiles = thisCoord.filter(function(tile) {return tile.y === minY});
-		} else {
-			var frontTiles = [thisCoord[0].x, thisCoord[0].y]
+		var thisCoord = this._eventOccupancy.coordinates;
+		var forwardTiles = [];
+		for (var i = 0; i < thisCoord.length; i++) {
+			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, d);
+			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, d);
+			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY})) forwardTiles.push({'x': tempX,'y': tempY});
 		}
-		for (var i = 0; i < frontTiles.length; i++) {
-			var x2 = $gameMap.roundXWithDirection(frontTiles[i].x, d);
-			var y2 = $gameMap.roundYWithDirection(frontTiles[i].y, d);
-			frontTiles[i] = {'x': x2, 'y': y2};
-		}
-		return frontTiles;
+		return forwardTiles;
 	};
 	
-	Game_CharacterBase.prototype.checkDiagonalTiles = function(horz, vert) {	
-		var minY = this._bigSpriteY0;
-		var maxY = this._bigSpriteY0;
-		var minX = this.x;
-		var maxX = this.x;
-		var checkHorz = this.checkAheadTiles(horz);
-		for (var i = 0; i < checkHorz.length; i++) {
-			if (checkHorz[i].x < minX) minX = checkHorz[i].x;
-			if (checkHorz[i].x > maxX) maxX = checkHorz[i].x;
+	Game_CharacterBase.prototype.checkDiagonalTiles = function(horz, vert) {
+		var thisCoord = this._eventOccupancy.coordinates;
+		var forwardTiles = [];
+		for (var i = 0; i < thisCoord.length; i++) {
+			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, horz);
+			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, vert);
+			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY})) forwardTiles.push({'x': tempX,'y': tempY});
 		}
-		var checkVert = this.checkAheadTiles(vert);
-		for (var i = 0; i < checkVert.length; i++) {
-			if (checkVert[i].y < minY) minY = checkVert[i].y;
-			if (checkVert[i].y > maxY) maxY = checkVert[i].y;
-		}
-		if (horz === 4 && vert === 2) var diagTile = [{'x': minX, 'y': maxY}];
-		if (horz === 6 && vert === 2) var diagTile = [{'x': maxX, 'y': maxY}];
-		if (horz === 4 && vert === 8) var diagTile = [{'x': minX, 'y': minY}];
-		if (horz === 6 && vert === 8) var diagTile = [{'x': maxX, 'y': minY}];
-		return checkHorz.concat(checkVert, diagTile);
+		return forwardTiles;
 	};
 	
 /* 
@@ -835,13 +800,12 @@
 	Game_CharacterBase.prototype.setDirection = function(d) {
 		if (!$gameMap || !$gameMap.tileEvents) return _Game_CharacterBase_setDirection.call(this, d);
 		if (this._bigSpriteType) {
-			oldCoord = this._eventOccupancy.coordinates;
+			oldCoord = this._eventOccupancy.coordinates; 
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
-			newCoord = this.setEventCoordinates(); 
+			newCoord = this.setEventCoordinates(); if (this._eventId === 20 && d === 2) {console.log(newCoord)};
 			for (var i = 0; i < newCoord.length; i++) {
-				var destinationPassage = this.isMapPassable(newCoord[i].x, newCoord[i].y, d)
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !destinationPassage || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					this._eventOccupancy.coordinates = oldCoord;
 					_Game_CharacterBase_setDirection.call(this, oldDir);
 				}
@@ -947,8 +911,7 @@
 				this._y += yPlus;
 				var newCoord = this.setEventCoordinates();
 				for (var i = 0; i < newCoord.length; i++) {
-					var destinationPassage = this.isMapPassable(newCoord[i].x, newCoord[i].y, 2) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 4) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 6) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 8)
-					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !destinationPassage || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, this.isMapPassable(newCoord[i].x, newCoord[i].y, this._direction)) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 						this._x = oldX;
 						this._y = oldY;
 						this._eventOccupancy.coordinates = oldCoord;
@@ -1005,8 +968,7 @@
 			this.straighten();
 			var newCoord = this._eventOccupancy.coordinates;
 			for (var i = 0; i < newCoord.length; i++) {
-				var destinationPassage = this.isMapPassable(newCoord[i].x, newCoord[i].y, 2) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 4) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 6) && this.isMapPassable(newCoord[i].x, newCoord[i].y, 8)
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !destinationPassage || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, this._direction) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					character.locate(oldcharX, oldcharY);
 					this.locate(oldX, oldY);
 					this._eventOccupancy.coordinates = oldCoord;
@@ -1030,8 +992,7 @@
 			this.straighten();
 			var newCoord = character._eventOccupancy.coordinates;
 			for (var i = 0; i < newCoord.length; i++) {
-				var destinationPassage = character.isMapPassable(newCoord[i].x, newCoord[i].y, 2) && character.isMapPassable(newCoord[i].x, newCoord[i].y, 4) && character.isMapPassable(newCoord[i].x, newCoord[i].y, 6) && character.isMapPassable(newCoord[i].x, newCoord[i].y, 8)
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !destinationPassage || character.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !character.isMapPassable(newCoord[i].x, newCoord[i].y, character._direction) || character.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					character.locate(oldcharX, oldcharY);
 					this.locate(oldX, oldY);
 					character._eventOccupancy.coordinates = oldCoord;
@@ -1200,7 +1161,7 @@
 	var _Game_Player_startMapEvent = Game_Player.prototype.startMapEvent;
 	Game_Player.prototype.startMapEvent = function(x, y, triggers, normal) {
 		if (!$gameMap.isEventRunning()) {
-			var eventHere = $gameMap.eventsXy(x, y);
+			var eventHere = $gameMap.eventsXy(x, y); console.log(eventHere);
 			for (var i = 0; i < eventHere.length; i++) {
 				if (!$gameMap.isEventRunning() && eventHere[i] && eventHere[i].isTriggerIn(triggers)) eventHere[i].start();
 			}
