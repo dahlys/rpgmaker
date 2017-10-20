@@ -208,6 +208,7 @@
 	
 	var _Game_System_initialize = Game_System.prototype.initialize;
 	Game_System.prototype.initialize = function() {
+		_Game_System_initialize.call(this);
 		this.setupBigPlayerSettings();
 	};
 	
