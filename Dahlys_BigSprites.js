@@ -2,9 +2,22 @@
  * @plugindesc Big Sprites
  * @author Dahlys
  * 
+ * @param Auto Set Comment
+ * @desc Automatically set 1st bigSprite comment on event page.
+ * @default true
+ *
+ * @param Boat Size
+ * @desc Size of boat
+ * 
+ * @param Ship Size
+ * @desc Size of ship
+ * 
+ * @param Airship Size
+ * @desc Size of airship
+ *
  * @help
  * ==============================================================================
- *                                   BIG SPRITES
+ *                                 BIG SPRITES
  * ==============================================================================
  * 
  * NOTE: I am following the map grid, so partially blocked tiles are not a thing.
@@ -18,9 +31,9 @@
  * categories:
  *
  * A) No matter how sprite moves/turns, the same tiles remain solid. e.g. A 
- *    giant robot, a giant subway train sprite
+ *    giant mecha
  * B) The middle of the big sprite image is solid and the rest is relative to it.
- *    e.g. A flying spaghetti monster, a large warship
+ *    e.g. A flying spaghetti monster, a large battleship
  * C) Complete customization of big sprite solidity based on direction faced.
  *
  * When a character turns or moves around, its size will be adjusted accordingly. 
@@ -168,13 +181,56 @@
 */
 
 (function() { 
+
+/* 
+----------------------------------------------------------------------------------
+		PLUGIN PARAMETERS
+----------------------------------------------------------------------------------
+*/	
+	
+	var parameters = PluginManager.parameters('Dahlys_BigSprites');
+	var autoSetComment = eval(parameters['Auto Set Comment']) || true;
+	var bigBoat = String(parameters['Boat Size']) || null;
+	var bigShip = String(parameters['Ship Size']) || null;
+	var bigAirship = String(parameters['Airship Size']) || null;
 	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
 		INITIALIZE NEW VARIABLES
 -------------------------------------------------------------------------------------------------------------------------------------------
 */
-
+	
+	var _Game_Map_initialize = Game_Map.prototype.initialize;
+	Game_Map.prototype.initialize = function() {
+		_Game_Map_initialize.call(this);
+		this._occupiedTiles = [];
+	};
+	
+	var _Game_System_initialize = Game_System.prototype.initialize;
+	Game_System.prototype.initialize = function() {
+		this.setupBigPlayerSettings();
+	};
+	
+	Game_System.prototype.setupBigPlayerSettings = function() {
+		this._bigSprite = {'type': null, 'Y0': null, 'size': null, 'front': null, 'back': null, 'left': null, 'right': null, 'radius': null, 'exCoord': null, 'exType': null, 'occupancy': null};
+	};
+	
+	var _Game_Character_initialize = Game_Character.prototype.initialize;
+	Game_Character.prototype.initialize = function() {
+		_Game_Character_initialize.call(this);
+		this.initializeBigSprite();		
+	};
+	
+	Game_Character.prototype.initializeBigSprite = function() {
+		this._bigSprite = {'type': null, 'Y0': this.y, 'size': 1, 'front': 0, 'back': 0, 'left': 0, 'right': 0, 'radius': 0, 'exCoord': null, 'exType': null, 'occupancy': [{'x': this.x, 'y': this.y}]};
+	};
+		
+	var _Game_Vehicle_initialize = Game_Vehicle.prototype.initialize;
+	Game_Vehicle.prototype.initialize = function(type) {
+		_Game_Vehicle_initialize.call(this, type);
+		this.setBigVehicleSize.call(this, type);
+	};
+	
 	var _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
 	Game_Event.prototype.setupPageSettings = function() {
 		_Game_Event_setupPageSettings.call(this);
@@ -182,447 +238,20 @@
 		this.setupBigSprite();		
 	};
 	
-	Game_Event.prototype.eventOccupancy = function() {
-		if (this._eventOccupancy === undefined) this.setupPageSettings.call(this);
-		return this._eventOccupancy;
-	};
-
-	Game_Event.prototype.spriteSize = function() {
-		if (this._spriteSize === undefined) this.setupPageSettings.call(this);
-		return this._spriteSize;
-	};
-	
-	Game_Event.prototype.bigSpriteY0 = function() {
-		if (this._bigSpriteY0 === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteY0;
-	};
-	
-	Game_Event.prototype.bigSpriteType = function() {
-		if (this._bigSpriteType === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteType;
-	};
-
-	Game_Event.prototype.bigSpriteFront = function() {
-		if (this._bigSpriteFront === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteFront;
-	};
-
-	Game_Event.prototype.bigSpriteBack = function() {
-		if (this._bigSpriteBack === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteBack;
-	};
-
-	Game_Event.prototype.bigSpriteLeft = function() {
-		if (this._bigSpriteLeft === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteLeft;
-	};
-
-	Game_Event.prototype.bigSpriteRight = function() {
-		if (this._bigSpriteRight === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteRight;
-	};
-	
-	Game_Event.prototype.bigSpriteRadius = function() {
-		if (this._bigSpriteRadius === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteRadius;
-	};
-	
-	Game_Event.prototype.bigSpriteExCoord = function() {
-		if (this._bigSpriteExCoord === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteExCoord;
-	};
-	
-	Game_Event.prototype.bigSpriteExType = function() {
-		if (this._bigSpriteExType === undefined) this.setupPageSettings.call(this);
-		return this._bigSpriteExType;
-	};
-
-	var _Game_Map_initialize = Game_Map.prototype.initialize;
-	Game_Map.prototype.initialize = function() {
-		_Game_Map_initialize.call(this);
-		this._occupiedTiles = [];
-	};
-	
-	Game_Map.prototype.occupiedTiles = function() {
-		if (this._occupiedTiles === undefined) this.initialize.call(this);
-		return this._occupiedTiles;
-	};
-	
-	var _Game_Player_initialize = Game_Player.prototype.initialize;
-	Game_Player.prototype.initialize = function() {
-		_Game_Player_initialize.call(this);
-		this.initializeBigPlayer();
-		
-	};
-	
-	Game_Player.prototype.initializeBigPlayer = function() {
-		this._spriteSize = 1;
-		this._bigSpriteY0 = this.y;
-		this._bigSpriteType = null;
-		this._bigSpriteFront = 0;		
-		this._bigSpriteBack = 0;
-		this._bigSpriteLeft = 0;
-		this._bigSpriteRight = 0;
-		this._bigSpriteRadius = 0;
-		this._bigSpriteExCoord = null;
-		this._bigSpriteExType = null;
-		this._eventOccupancy = {'event': this, 'coordinates': []};
-	};
-	
-	var _Game_Vehicle_initialize = Game_Vehicle.prototype.initialize;
-	Game_Vehicle.prototype.initialize = function(type) {
-		_Game_Vehicle_initialize.call(this, type);
-		this.initializeBigVehicle();
-	};
-	
-	Game_Vehicle.prototype.initializeBigVehicle = function() {
-		this._spriteSize = 1;
-		this._bigSpriteY0 = this.y;
-		this._bigSpriteType = null;
-		this._bigSpriteFront = 0;		
-		this._bigSpriteBack = 0;
-		this._bigSpriteLeft = 0;
-		this._bigSpriteRight = 0;
-		this._bigSpriteRadius = 0;
-		this._bigSpriteExCoord = null;
-		this._bigSpriteExType = null;
-		this._eventOccupancy = {'event': this, 'coordinates': []};
-	};
-	
-	Game_Event.prototype.initializeBigSprite = function() {
-		this._spriteSize = 1;
-		this._bigSpriteY0 = this.y;
-		this._bigSpriteType = null;
-		this._bigSpriteFront = 0;		
-		this._bigSpriteBack = 0;
-		this._bigSpriteLeft = 0;
-		this._bigSpriteRight = 0;
-		this._bigSpriteRadius = 0;
-		this._bigSpriteExCoord = null;
-		this._bigSpriteExType = null;
-		this._eventOccupancy = {'event': this, 'coordinates': []};
-	};
-	
 	Game_Event.prototype.setupBigSprite = function() {
 		if (!this.page()) return;
 		this.setSpriteSizeFromEventNote();
 		this.setSpriteExSizeFromEventNote();
-		this.setSpriteSizeFromPageComment();	
+		if (autoSetComment) this.setSpriteSizeFromPageComment();	
 		this.setEventCoordinates();
 		this.updateEventCoordinates();
-	};
+	};		
 	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
 		SETUP BIG EVENT
 -------------------------------------------------------------------------------------------------------------------------------------------
 */		
-	
-	var _Game_Interpreter_command108 = Game_Interpreter.prototype.command108;
-	Game_Interpreter.prototype.command108 = function() {
-		var result = _Game_Interpreter_command108.call(this);
-		var thisEvent = $gameMap.event(this._eventId);
-		for (var i = 0; i < this._comments.length; i++) {
-			if (this._comments[i].match(/bigEventEx:/i)) {
-				thisEvent.executeBigSpriteExComment(this._comments[i]);
-			}
-			if (this._comments[i].match(/bigEvent:/i)) {
-				thisEvent.executeBigSpriteComment(this._comments[i]);
-			}
-			if (this._comments[i].match(/bigPlayer:/i)) {
-				thisEvent.executeBigPlayerComment(this._comments[i]);
-			}
-			if (this._comments[i].match(/bigPlayerEx:/i)) {
-				thisEvent.executeBigPlayerExComment(this._comments[i]);
-			}
-			if (this._comments[i].match(/bigVehicle:/i)) {
-				thisEvent.executeBigVehicleComment(this._comments[i]);
-			}
-		}
-		return result;
-	};
-	
-	Game_Event.prototype.executeBigPlayerComment = function(comment) {
-		$gamePlayer.initializeBigPlayer();
-		var capturingRegexA = /(?:<bigPlayer: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
-		var capturingRegexB = /(?:<bigPlayer: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
-		var capturingRegexB2 = /(?:<bigPlayer: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
-		var capturingRegexB3 = /(?:<bigPlayer: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
-		var capturingRegexC = /(?:<bigPlayer: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
-		if (comment.match(/<bigPlayer: \d+ \d+ \d+ \d+ \d+>/i)) {
-			var params = capturingRegexB.exec(comment);
-			$gamePlayer._spriteSize = Number(params[1]);
-			$gamePlayer._bigSpriteFront = Number(params[2]);
-			$gamePlayer._bigSpriteBack = Number(params[3]);
-			$gamePlayer._bigSpriteLeft = Number(params[4]);
-			$gamePlayer._bigSpriteRight = Number(params[5]);
-			$gamePlayer._bigSpriteType = 'squareB';
-		} else if (comment.match(/<bigPlayer: \d+ diamond \d+>/i)) {
-			var params = capturingRegexB2.exec(comment); console.log(params);
-			$gamePlayer._spriteSize = Number(params[1]);
-			$gamePlayer._bigSpriteRadius = Number(params[2]);
-			$gamePlayer._bigSpriteType = 'diamondB';
-		} else if (comment.match(/<bigPlayer: \d+ circle \d+>/i)) {
-			var params = capturingRegexB3.exec(comment);
-			$gamePlayer._spriteSize = Number(params[1]);
-			$gamePlayer._bigSpriteRadius = Number(params[2]);
-			$gamePlayer._bigSpriteType = 'circleB';
-		} else if (comment.match(/<bigPlayer: \[.*\]>/i)) {
-			var params = capturingRegexC.exec(comment);	
-			$gamePlayer._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-			$gamePlayer._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-			$gamePlayer._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-			$gamePlayer._bigSpriteType = 'custom';
-		} else if (comment.match(/<bigPlayer: \d+ \d+ \d+>/i)) {
-			var params = capturingRegexA.exec(comment);
-			$gamePlayer._bigSpriteBack = Number(params[1]);
-			$gamePlayer._bigSpriteLeft = Number(params[2]);
-			$gamePlayer._bigSpriteRight = Number(params[3]);
-			$gamePlayer._bigSpriteType = 'squareA';
-		}
-		$gamePlayer.setEventCoordinates();
-		$gamePlayer.updateEventCoordinates();
-	};
-	
-	Game_Event.prototype.executeBigPlayerExComment = function(comment) {
-		$gamePlayer._bigSpriteExCoord = null;
-		$gamePlayer._bigSpriteExType = null;
-		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
-		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
-		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
-		if (comment.match(/\[.*\]/)) {
-			var params = capturingRegexC.exec(comment);
-			var coord = {'down': [], 'left': [], 'right': [], 'up': []};
-			if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			$gamePlayer._bigSpriteExCoord = coord;
-			$gamePlayer._bigSpriteExType = 'C';
-		}
-		if (comment.match(/(\d+|-\d+),(\d+|-\d+)/)) {
-			var coord = [];
-			do {
-				var match = capturingRegexA.exec(comment);
-				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-			} while (match);
-			$gamePlayer._bigSpriteExCoord = coord;
-			if ($gamePlayer._bigSpriteType === 'squareA') $gamePlayer._bigSpriteExType = 'A';
-			else $gamePlayer._bigSpriteExType = 'B';
-		}
-		$gamePlayer.setEventCoordinates();
-		$gamePlayer.updateEventCoordinates();
-	};
-	
-	Game_Event.prototype.executeBigSpriteComment = function(comment) {
-		this.initializeBigSprite();
-		var capturingRegexA = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
-		var capturingRegex = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
-		var capturingRegex2 = /(?:<bigEvent: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
-		var capturingRegex3 = /(?:<bigEvent: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
-		var capturingRegexC = /(?:<bigEvent: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
-		if (comment.match(/<bigEvent: \d+ \d+ \d+ \d+ \d+>/i)) {
-			var params = capturingRegex.exec(comment);
-			this._spriteSize = Number(params[1]);
-			this._bigSpriteFront = Number(params[2]);
-			this._bigSpriteBack = Number(params[3]);
-			this._bigSpriteLeft = Number(params[4]);
-			this._bigSpriteRight = Number(params[5]);
-			this._bigSpriteType = 'squareB';
-		} else if (comment.match(/<bigEvent: \d+ diamond \d+>/i)) {
-			var params = capturingRegex2.exec(comment);
-			this._spriteSize = Number(params[1]);
-			this._bigSpriteRadius = Number(params[2]);
-			this._bigSpriteType = 'diamondB';
-		} else if (comment.match(/<bigEvent: \d+ circle \d+>/i)) {
-			var params = capturingRegex3.exec(comment);
-			this._spriteSize = Number(params[1]);
-			this._bigSpriteRadius = Number(params[2]);
-			this._bigSpriteType = 'circleB';
-		} else if (comment.match(/<bigEvent: \[.*\]>/)) {
-			var params = capturingRegexC.exec(comment);
-			this._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-			this._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-			this._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-			this._bigSpriteType = 'custom';
-		} else if (comment.match(/<bigEvent: \d+ \d+ \d+>/)) {
-			var params = capturingRegexA.exec(comment);
-			this._bigSpriteBack = Number(params[1]);
-			this._bigSpriteLeft = Number(params[2]);
-			this._bigSpriteRight = Number(params[3]);
-			this._bigSpriteType = 'squareA';
-			return;
-		}		
-		this.setEventCoordinates();
-		this.updateEventCoordinates();
-	};
-	
-	Game_Event.prototype.executeBigSpriteExComment = function(comment) {
-		this._bigSpriteExCoord = null;
-		this._bigSpriteExType = null;
-		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
-		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
-		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
-		if (comment.match(/\[.*\]/)) {
-			var params = capturingRegexC.exec(comment);
-			var coord = {'down': [], 'left': [], 'right': [], 'up': []};
-			if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(comment);
-					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			this._bigSpriteExCoord = coord;
-			this._bigSpriteExType = 'C';
-		}
-		if (comment.match(/(\d+|-\d+),(\d+|-\d+)/)) {
-			var coord = [];
-			do {
-				var match = capturingRegexA.exec(comment);
-				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-			} while (match);
-			this._bigSpriteExCoord = coord;
-			if (this._bigSpriteType === 'squareA') this._bigSpriteExType = 'A';
-			else this._bigSpriteExType = 'B';
-		}
-		this.setEventCoordinates();
-		this.updateEventCoordinates();
-	};
-	
-	Game_Event.prototype.setSpriteSizeFromPageComment = function() {		
-		var pagelist = this.list();
-		var capturingRegexA = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i
-		var capturingRegex = /(?:<bigEvent: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?:>)/i;
-		var capturingRegex2 = /(?:<bigEvent: )(\d+)(?: )(?:diamond )(\d+)(?:>)/i;
-		var capturingRegex3 = /(?:<bigEvent: )(\d+)(?: )(?:circle )(\d+)(?:>)/i;
-		var capturingRegexC = /(?:<bigEvent: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\]>)/i	
-		
-		var capturingRegexA2 = /(\d+|-\d+),(\d+|-\d+)/g
-		var capturingRegexC2 = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
-		var capturingRegexC3 = /(\d+|-\d+),(\d+|-\d+)/g
-		
-		for (var i = 0; i < pagelist.length; i++) {
-			var parameters = pagelist[i].parameters;
-			for (var j = 0; j < parameters.length; j++) {
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent reset>/i)) this.initializeBigSprite();
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+ \d+ \d+>/i)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegex.exec(comment);
-					this._spriteSize = Number(params[1]);
-					this._bigSpriteFront = Number(params[2]);
-					this._bigSpriteBack = Number(params[3]);
-					this._bigSpriteLeft = Number(params[4]);
-					this._bigSpriteRight = Number(params[5]);
-					this._bigSpriteType = 'squareB';					
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ diamond \d+>/i)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegex2.exec(comment);
-					this._spriteSize = Number(params[1]);
-					this._bigSpriteRadius = Number(params[2]);
-					this._bigSpriteType = 'diamondB';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ circle \d+>/i)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegex3.exec(comment);
-					this._spriteSize = Number(params[1]);
-					this._bigSpriteRadius = Number(params[2]);
-					this._bigSpriteType = 'circleB';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \[.*\]/)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegexC.exec(comment);
-					this._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-					this._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-					this._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-					this._bigSpriteType = 'custom';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+/)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegexA.exec(comment);
-					this._bigSpriteBack = Number(params[1]);
-					this._bigSpriteLeft = Number(params[2]);
-					this._bigSpriteRight = Number(params[3]);
-					this._bigSpriteType = 'squareA';
-				}	
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: \[.*\]/)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegexC2.exec(comment);
-					var coord = {'down': [], 'left': [], 'right': [], 'up': []};
-					if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					this._bigSpriteExCoord = coord;
-					this._bigSpriteExType = 'C';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: (\d+|-\d+),(\d+|-\d+)/)) {
-					var comment = pagelist[i].parameters;
-					var coord = [];
-					do {
-						var match = capturingRegexA.exec(comment);
-						if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-					} while (match);
-					this._bigSpriteExCoord = coord;
-					if (this._bigSpriteType === 'squareA') this._bigSpriteExType = 'A';
-					else this._bigSpriteExType = 'B';
-				}
-			}
-		}
-	};
 	
 	Game_Event.prototype.setSpriteSizeFromEventNote = function() {
 		if (this.isSpawnEvent) return;
@@ -635,47 +264,42 @@
 		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/	
 		if (note.match(/\d+ \d+ \d+ \d+ \d+/)) {
 			var params = capturingRegex.exec(note);
-			this._spriteSize = Number(params[1]);
-			this._bigSpriteFront = Number(params[2]);
-			this._bigSpriteBack = Number(params[3]);
-			this._bigSpriteLeft = Number(params[4]);
-			this._bigSpriteRight = Number(params[5]);
-			if (this._bigSpriteFront > 0 || this._bigSpriteBack > 0 || this._bigSpriteLeft > 0 || this._bigSpriteRight > 0) this._bigSpriteType = 'squareB';
+			this._bigSprite.size = Number(params[1]);
+			this._bigSprite.front = Number(params[2]);
+			this._bigSprite.back = Number(params[3]);
+			this._bigSprite.left = Number(params[4]);
+			this._bigSprite.right = Number(params[5]);
+			this._bigSprite.type = 'squareB';
 			return;
 		}
 		if (note.match(/\d+ diamond \d+/i)) {
 			var params = capturingRegex2.exec(note);
-			this._spriteSize = Number(params[1]);
-			this._bigSpriteRadius = Number(params[2]);
-			if (this._bigSpriteRadius > 0 ) this._bigSpriteType = 'diamondB';
+			this._bigSprite.size = Number(params[1]);
+			this._bigSprite.radius = Number(params[2]);
+			this._bigSprite.type = 'diamondB';
 			return;
 		}
 		if (note.match(/\d+ circle \d+/i)) {
 			var params = capturingRegex3.exec(note);
-			this._spriteSize = Number(params[1]);
-			this._bigSpriteRadius = Number(params[2]);
-			if (this._bigSpriteRadius > 0 ) this._bigSpriteType = 'circleB';
+			this._bigSprite.size = Number(params[1]);
+			this._bigSprite.radius = Number(params[2]);
+			this._bigSprite.type = 'circleB';
 			return;
 		}
 		if (note.match(/\[.*\]/)) {
 			var params = capturingRegexC.exec(note);
-			this._bigSpriteBack = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-			this._bigSpriteLeft = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-			this._bigSpriteRight = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-			for (var i = 1; i < params.length; i++) {
-				if (Number(params[i]) > 0) {
-					this._bigSpriteType = 'custom';
-					break;
-				}
-			}
+			this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
+			this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
+			this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
+			this._bigSprite.type = 'custom';
 			return;
 		}
 		if (note.match(/\d+ \d+ \d+/)) {
 			var params = capturingRegexA.exec(note);
-			this._bigSpriteBack = Number(params[1]);
-			this._bigSpriteLeft = Number(params[2]);
-			this._bigSpriteRight = Number(params[3]);
-			if (this._bigSpriteBack > 0 || this._bigSpriteLeft > 0 || this._bigSpriteRight > 0) this._bigSpriteType = 'squareA';
+			this._bigSprite.back = Number(params[1]);
+			this._bigSprite.left = Number(params[2]);
+			this._bigSprite.right = Number(params[3]);
+			this._bigSprite.type = 'squareA';
 			return;
 		}		
 	};
@@ -714,8 +338,8 @@
 					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
 				} while (match);
 			}
-			this._bigSpriteExCoord = coord;
-			this._bigSpriteExType = 'C';
+			this._bigSprite.exCoord = coord;
+			this._bigSprite.exType = 'C';
 		}
 		if (note.match(/(\d+|-\d+),(\d+|-\d+)/)) {
 			var coord = [];
@@ -723,28 +347,274 @@
 				var match = capturingRegexA.exec(note);
 				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
 			} while (match);
-			this._bigSpriteExCoord = coord;
-			if (this._bigSpriteType === 'squareA') this._bigSpriteExType = 'A';
-			else this._bigSpriteExType = 'B';
+			this._bigSprite.exCoord = coord;
+			if (this._bigSprite.type === 'squareA') this._bigSprite.exType = 'A';
+			else this._bigSprite.exType = 'B';
 		}
 	};
 	
+	Game_Vehicle.prototype.setBigVehicleSize = function(type) {
+		if (type === 'boat' && bigBoat) {
+			this.setBigVehicleVariables(bigBoat);
+		}
+		if (type === 'ship' && bigShip) {
+			this.setBigVehicleVariables(bigShip);
+		}
+		if (type === 'airship' && bigAirship) {
+			this.setBigVehicleVariables(bigAirship);
+		}
+	};
+	
+	Game_Character.prototype.setBigVehicleVariables = function(args) {
+		this.initializeBigSprite();
+		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/i
+		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/i	
+		if (args.match(/\[.*\]/)) {
+			var params = capturingRegexC.exec(args);
+			this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
+			this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
+			this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
+			this._bigSprite.type = 'custom';
+		} else if (args.match(/\d+ \d+ \d+/)) {
+			var params = capturingRegexA.exec(args);
+			this._bigSprite.back = Number(params[1]);
+			this._bigSprite.left = Number(params[2]);
+			this._bigSprite.right = Number(params[3]);
+			this._bigSprite.type = 'squareA';
+		}
+	};
+	
+	var _Game_Interpreter_command108 = Game_Interpreter.prototype.command108;
+	Game_Interpreter.prototype.command108 = function() {
+		var result = _Game_Interpreter_command108.call(this);
+		var thisEvent = $gameMap.event(this._eventId);
+		for (var i = 0; i < this._comments.length; i++) {
+			if (this._comments[i].match(/bigEvent:/i)) {
+				thisEvent.executeBigSpriteComment(this._comments[i], thisEvent);
+			}
+			if (this._comments[i].match(/bigEventEx:/i)) {
+				thisEvent.executeBigSpriteExComment(this._comments[i], thisEvent);
+			}			
+			if (this._comments[i].match(/bigPlayer:/i)) {
+				thisEvent.executeBigSpriteComment(this._comments[i], $gamePlayer);
+			}
+			if (this._comments[i].match(/bigPlayerEx:/i)) {
+				thisEvent.executeBigSpriteExComment(this._comments[i], $gamePlayer);
+			}
+		}
+		return result;
+	};
+	
+	Game_Event.prototype.executeBigSpriteComment = function(comment, target) {
+		target.initializeBigSprite();
+		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/i
+		var capturingRegex = /(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)/i;
+		var capturingRegex2 = /(\d+)(?: )(?:diamond )(\d+)/i;
+		var capturingRegex3 = /(\d+)(?: )(?:circle )(\d+)/i;
+		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/i	
+		if (comment.match(/\d+ \d+ \d+ \d+ \d+/i)) {
+			var params = capturingRegex.exec(comment);
+			target._bigSprite.size = Number(params[1]);
+			target._bigSprite.front = Number(params[2]);
+			target._bigSprite.back = Number(params[3]);
+			target._bigSprite.left = Number(params[4]);
+			target._bigSprite.right = Number(params[5]);
+			target._bigSprite.type = 'squareB';
+		} else if (comment.match(/\d+ diamond \d+/i)) {
+			var params = capturingRegex2.exec(comment);
+			target._bigSprite.size = Number(params[1]);
+			target._bigSprite.radius = Number(params[2]);
+			target._bigSprite.type = 'diamondB';
+		} else if (comment.match(/\d+ circle \d+/i)) {
+			var params = capturingRegex3.exec(comment);
+			target._bigSprite.size = Number(params[1]);
+			target._bigSprite.radius = Number(params[2]);
+			target._bigSprite.type = 'circleB';
+		} else if (comment.match(/\[.*\]/)) {
+			var params = capturingRegexC.exec(comment);
+			target._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
+			target._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
+			target._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
+			target._bigSprite.type = 'custom';
+		} else if (comment.match(/\d+ \d+ \d+/)) {
+			var params = capturingRegexA.exec(comment);
+			target._bigSprite.back = Number(params[1]);
+			target._bigSprite.left = Number(params[2]);
+			target._bigSprite.right = Number(params[3]);
+			target._bigSprite.type = 'squareA';
+		}		
+		target.setEventCoordinates();
+		target.updateEventCoordinates();
+	};
+	
+	Game_Event.prototype.executeBigSpriteExComment = function(comment, target) {
+		target._bigSprite.exCoord = null;
+		target._bigSprite.exType = null;
+		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
+		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
+		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
+		if (comment.match(/\[.*\]/)) {
+			var params = capturingRegexC.exec(comment);
+			var coord = {'down': [], 'left': [], 'right': [], 'up': []};
+			if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+				do {
+					var match = capturingRegexC2.exec(comment);
+					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+				} while (match);
+			}
+			target._bigSprite.exCoord = coord;
+			target._bigSprite.exType = 'C';
+		}
+		if (comment.match(/(\d+|-\d+),(\d+|-\d+)/)) {
+			var coord = [];
+			do {
+				var match = capturingRegexA.exec(comment);
+				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+			} while (match);
+			target._bigSprite.exCoord = coord;
+			if (target._bigSprite.type === 'squareA') target._bigSprite.exType = 'A';
+			else target._bigSprite.exType = 'B';
+		}
+		target.setEventCoordinates();
+		target.updateEventCoordinates();
+	};
+	
+	Game_Event.prototype.setSpriteSizeFromPageComment = function() {		
+		var pagelist = this.list();
+		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/i
+		var capturingRegex = /(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)/i;
+		var capturingRegex2 = /(\d+)(?: )(?:diamond )(\d+)/i;
+		var capturingRegex3 = /(\d+)(?: )(?:circle )(\d+)/i;
+		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/i	
+		
+		var capturingRegexA2 = /(\d+|-\d+),(\d+|-\d+)/g
+		var capturingRegexC2 = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
+		var capturingRegexC3 = /(\d+|-\d+),(\d+|-\d+)/g
+		
+		for (var i = 0; i < pagelist.length; i++) {
+			var parameters = pagelist[i].parameters;
+			for (var j = 0; j < parameters.length; j++) {
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+ \d+ \d+>/i)) {
+					var comment = pagelist[i].parameters;
+					var params = capturingRegex.exec(comment);
+					this._bigSprite.size = Number(params[1]);
+					this._bigSprite.front = Number(params[2]);
+					this._bigSprite.back = Number(params[3]);
+					this._bigSprite.left = Number(params[4]);
+					this._bigSprite.right = Number(params[5]);
+					this._bigSprite.type = 'squareB';					
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ diamond \d+>/i)) {
+					var comment = pagelist[i].parameters;
+					var params = capturingRegex2.exec(comment);
+					this._bigSprite.size = Number(params[1]);
+					this._bigSprite.radius = Number(params[2]);
+					this._bigSprite.type = 'diamondB';
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ circle \d+>/i)) {
+					var comment = pagelist[i].parameters;
+					var params = capturingRegex3.exec(comment);
+					this._bigSprite.size = Number(params[1]);
+					this._bigSprite.radius = Number(params[2]);
+					this._bigSprite.type = 'circleB';
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \[.*\]/)) {
+					var comment = pagelist[i].parameters;
+					var params = capturingRegexC.exec(comment);
+					this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
+					this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
+					this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
+					this._bigSprite.type = 'custom';
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+/)) {
+					var comment = pagelist[i].parameters;
+					var params = capturingRegexA.exec(comment);
+					this._bigSprite.back = Number(params[1]);
+					this._bigSprite.left = Number(params[2]);
+					this._bigSprite.right = Number(params[3]);
+					this._bigSprite.type = 'squareA';
+				}	
+				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: \[.*\]/)) {
+					var comment = pagelist[i].parameters;
+					var params = capturingRegexC2.exec(comment);
+					var coord = {'down': [], 'left': [], 'right': [], 'up': []};
+					if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+						do {
+							var match = capturingRegexC3.exec(comment);
+							if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+						} while (match);
+					}
+					if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+						do {
+							var match = capturingRegexC3.exec(comment);
+							if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+						} while (match);
+					}
+					if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+						do {
+							var match = capturingRegexC3.exec(comment);
+							if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+						} while (match);
+					}
+					if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
+						do {
+							var match = capturingRegexC3.exec(comment);
+							if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+						} while (match);
+					}
+					this._bigSprite.exCoord = coord;
+					this._bigSprite.exType = 'C';
+				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: (\d+|-\d+),(\d+|-\d+)/)) {
+					var comment = pagelist[i].parameters;
+					var coord = [];
+					do {
+						var match = capturingRegexA.exec(comment);
+						if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
+					} while (match);
+					this._bigSprite.exCoord = coord;
+					if (this._bigSprite.type === 'squareA') this._bigSprite.exType = 'A';
+					else this._bigSprite.exType = 'B';
+				}
+			}
+		}
+	};
+
+/* 
+-------------------------------------------------------------------------------------------------------------------------------------------
+		SET AND REFRESH EVENT COORDINATES
+-------------------------------------------------------------------------------------------------------------------------------------------
+*/	
+	
 	Game_Character.prototype.setEventCoordinates = function() {
-		this._bigSpriteY0 = this.y - Math.floor(this._spriteSize / 2);
+		this._bigSprite.Y0 = this.y - Math.floor(this._bigSprite.size / 2);
 		var coord = [];
-		if (this._bigSpriteType === 'squareB') {
+		if (this._bigSprite.type === 'squareB') {
 			var occupancy = this.getTypeBOccupancy();
-			var topleft = [this.x - occupancy.left, this._bigSpriteY0 - occupancy.up];
+			var topleft = [this.x - occupancy.left, this._bigSprite.Y0 - occupancy.up];
 			for (var j = 0; j <= (occupancy.up + occupancy.down); j++) {
 				for (var i = 0; i <= (occupancy.left + occupancy.right); i++) {
 					coord.push({'x': topleft[0] + i, 'y': topleft[1] + j});
 				}
 			}
 		}
-		if (this._bigSpriteType === 'diamondB') {
-			var rad = this._bigSpriteRadius;
+		if (this._bigSprite.type === 'diamondB') {
+			var rad = this._bigSprite.radius;
 			var x0 = this.x;
-			var y0 = this._bigSpriteY0;
+			var y0 = this._bigSprite.Y0;
 			for (var y = -rad; y <= rad; y++) {
 				for (var x = -rad; x <= rad; x++) {
 					if (Math.abs(x) + Math.abs(y) <= rad) {
@@ -753,10 +623,10 @@
 				}
 			}
 		}
-		if (this._bigSpriteType === 'circleB') {
-			var rad = this._bigSpriteRadius;
+		if (this._bigSprite.type === 'circleB') {
+			var rad = this._bigSprite.radius;
 			var x0 = this.x;
-			var y0 = this._bigSpriteY0;
+			var y0 = this._bigSprite.Y0;
 			coord.push({'x': x0, 'y': y0});
 			var x = rad;
 			var y = 0;
@@ -778,8 +648,8 @@
 				}
 			}
 		}
-		if (this._bigSpriteType === 'squareA') {
-			var occupancy = {'up': this._bigSpriteBack, 'left': this._bigSpriteLeft, 'right': this._bigSpriteRight};
+		if (this._bigSprite.type === 'squareA') {
+			var occupancy = {'up': this._bigSprite.back, 'left': this._bigSprite.left, 'right': this._bigSprite.right};
 			var topleft = [this.x - occupancy.left, this.y - occupancy.up];
 			for (var j = 0; j <= occupancy.up; j++) {
 				for (var i = 0; i <= (occupancy.left + occupancy.right); i++) {
@@ -787,15 +657,15 @@
 				}
 			}
 		}
-		if (this._bigSpriteType === 'custom') {
+		if (this._bigSprite.type === 'custom') {
 			if (this._direction === 2) {
-				var occupancy = {'up': this._bigSpriteBack[0], 'left': this._bigSpriteLeft[0], 'right': this._bigSpriteRight[0]};
+				var occupancy = {'up': this._bigSprite.back[0], 'left': this._bigSprite.left[0], 'right': this._bigSprite.right[0]};
 			} else if (this._direction === 4) {
-				var occupancy = {'up': this._bigSpriteBack[1], 'left': this._bigSpriteLeft[1], 'right': this._bigSpriteRight[1]};
+				var occupancy = {'up': this._bigSprite.back[1], 'left': this._bigSprite.left[1], 'right': this._bigSprite.right[1]};
 			} else if (this._direction === 6) {
-				var occupancy = {'up': this._bigSpriteBack[2], 'left': this._bigSpriteLeft[2], 'right': this._bigSpriteRight[2]};
+				var occupancy = {'up': this._bigSprite.back[2], 'left': this._bigSprite.left[2], 'right': this._bigSprite.right[2]};
 			} else if (this._direction === 8) {
-				var occupancy = {'up': this._bigSpriteBack[3], 'left': this._bigSpriteLeft[3], 'right': this._bigSpriteRight[3]};
+				var occupancy = {'up': this._bigSprite.back[3], 'left': this._bigSprite.left[3], 'right': this._bigSprite.right[3]};
 			}
 			var topleft = [this.x - occupancy.left, this.y - occupancy.up];
 			for (var j = 0; j <= occupancy.up; j++) {
@@ -804,61 +674,61 @@
 				}
 			}
 		}
-		if (this._bigSpriteExType === 'A') {
-			var exCoord = this._bigSpriteExCoord;
+		if (this._bigSprite.exType === 'A') {
+			var exCoord = this._bigSprite.exCoord;
 			for (var i = 0; i < exCoord.length; i++) {
 				coord.push({'x': this.x + exCoord[i].dx, 'y': this.y + exCoord[i].dy});
 			}
 		}
-		if (this._bigSpriteExType === 'B') {
-			var exCoord = this._bigSpriteExCoord;
+		if (this._bigSprite.exType === 'B') {
+			var exCoord = this._bigSprite.exCoord;
 			if (this._direction === 2) {
 				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x + exCoord[i].dx, 'y': this._bigSpriteY0 + exCoord[i].dy});
+					coord.push({'x': this.x + exCoord[i].dx, 'y': this._bigSprite.Y0 + exCoord[i].dy});
 				}
 			} else if (this._direction === 4) {
 				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x - exCoord[i].dy, 'y': this._bigSpriteY0 + exCoord[i].dx});
+					coord.push({'x': this.x - exCoord[i].dy, 'y': this._bigSprite.Y0 + exCoord[i].dx});
 				}
 			} else if (this._direction === 6) {
 				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x + exCoord[i].dy, 'y': this._bigSpriteY0 - exCoord[i].dx});
+					coord.push({'x': this.x + exCoord[i].dy, 'y': this._bigSprite.Y0 - exCoord[i].dx});
 				}
 			} else if (this._direction === 8) {
 				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x - exCoord[i].dx, 'y': this._bigSpriteY0 - exCoord[i].dy});
+					coord.push({'x': this.x - exCoord[i].dx, 'y': this._bigSprite.Y0 - exCoord[i].dy});
 				}
 			}			
 		}
-		if (this._bigSpriteExType === 'C') {
+		if (this._bigSprite.exType === 'C') {
 			if (this._direction === 2) {
-				var exCoord = this._bigSpriteExCoord.down;
+				var exCoord = this._bigSprite.exCoord.down;
 			} else if (this._direction === 4) {
-				var exCoord = this._bigSpriteExCoord.left;
+				var exCoord = this._bigSprite.exCoord.left;
 			} else if (this._direction === 6) {
-				var exCoord = this._bigSpriteExCoord.right;
+				var exCoord = this._bigSprite.exCoord.right;
 			} else if (this._direction === 8) {
-				var exCoord = this._bigSpriteExCoord.up;
+				var exCoord = this._bigSprite.exCoord.up;
 			}
 			for (var i = 0; i < exCoord.length; i++) {
 				coord.push({'x': this.x + exCoord[i].dx, 'y': this.y + exCoord[i].dy});
 			}
 		}
-		if (!this._bigSpriteType && !this._bigSpriteExType) {
+		if (!this._bigSprite.type && !this._bigSprite.exType) {
 			coord.push({'x': this.x, 'y': this.y});
 		}
-		this._eventOccupancy.coordinates = coord;
-		return this._eventOccupancy.coordinates;
+		this._bigSprite.occupancy = coord;
+		return this._bigSprite.occupancy;
 	};
 	
 	Game_CharacterBase.prototype.updateEventCoordinates = function() { 
 		for (var i = 0; i < $gameMap._occupiedTiles.length; i++) {
 			if ($gameMap._occupiedTiles[i].event === this) { 
-				$gameMap._occupiedTiles[i] = this._eventOccupancy;
+				$gameMap._occupiedTiles[i] = this._bigSprite.occupancy;
 				return;
 			}
 		}
-		$gameMap._occupiedTiles.push(this._eventOccupancy);
+		$gameMap._occupiedTiles.push(this._bigSprite.occupancy);
 	};
 	
 	Game_Character.prototype.getTypeBOccupancy = function() {
@@ -867,25 +737,25 @@
 		var left = 0;
 		var right = 0;
 		if (this._direction === 2) {
-			up = this._bigSpriteBack;
-			down = this._bigSpriteFront;
-			left = this._bigSpriteRight;
-			right = this._bigSpriteLeft;
+			up = this._bigSprite.back;
+			down = this._bigSprite.front;
+			left = this._bigSprite.right;
+			right = this._bigSprite.left;
 		} else if (this._direction === 4) {
-			up = this._bigSpriteRight;
-			down = this._bigSpriteLeft;
-			left = this._bigSpriteFront;
-			right = this._bigSpriteBack;
+			up = this._bigSprite.right;
+			down = this._bigSprite.left;
+			left = this._bigSprite.front;
+			right = this._bigSprite.back;
 		} else if (this._direction === 6) {
-			up = this._bigSpriteLeft;
-			down = this._bigSpriteRight;
-			left = this._bigSpriteBack;
-			right = this._bigSpriteFront;
+			up = this._bigSprite.left;
+			down = this._bigSprite.right;
+			left = this._bigSprite.back;
+			right = this._bigSprite.front;
 		} else if (this._direction === 8) {
-			up = this._bigSpriteFront;
-			down = this._bigSpriteBack;
-			left = this._bigSpriteLeft;
-			right = this._bigSpriteRight;
+			up = this._bigSprite.front;
+			down = this._bigSprite.back;
+			left = this._bigSprite.left;
+			right = this._bigSprite.right;
 		}
 		return {'up': up, 'down': down, 'left': left, 'right': right};
 	};
@@ -898,8 +768,8 @@
 	
 	var _Game_CharacterBase_pos = Game_CharacterBase.prototype.pos;
 	Game_CharacterBase.prototype.pos = function(x, y) {
-		if (!this._eventOccupancy) return _Game_CharacterBase_pos.call(this, x, y);
-		var coord = this._eventOccupancy.coordinates;
+		if (!this._bigSprite) return _Game_CharacterBase_pos.call(this, x, y);
+		var coord = this._bigSprite.occupancy;
 		for (var i = 0; i < coord.length; i++) {
 			if (coord[i].x === x && coord[i].y === y) return true;
 		}
@@ -913,7 +783,7 @@
 */
 	
 	Game_CharacterBase.prototype.checkAheadTiles = function(d) {		
-		var thisCoord = this._eventOccupancy.coordinates;
+		var thisCoord = this._bigSprite.occupancy;
 		var forwardTiles = [];
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, d);
@@ -924,7 +794,7 @@
 	};
 	
 	Game_CharacterBase.prototype.checkDiagonalTiles = function(horz, vert) {
-		var thisCoord = this._eventOccupancy.coordinates;
+		var thisCoord = this._bigSprite.occupancy;
 		var forwardTiles = [];
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, horz);
@@ -933,24 +803,261 @@
 		}
 		return forwardTiles;
 	};
+
+/* 
+-------------------------------------------------------------------------------------------------------------------------------------------
+		GETTING ON/OFF GAME VEHICLE
+-------------------------------------------------------------------------------------------------------------------------------------------
+*/
+	
+	Game_Player.prototype.forceMoveDirection = function(d) {
+		this.setThrough(true);
+		this.setDirection(d);
+		this.moveForward();
+		this.setThrough(false);
+	};
+	
+	var _Game_Vehicle_syncWithPlayer = Game_Vehicle.prototype.syncWithPlayer;
+	Game_Vehicle.prototype.syncWithPlayer = function() {
+		_Game_Vehicle_syncWithPlayer.call(this);
+		this._bigSprite.occupancy = [];
+	};
+	
+	var _Game_Player_getOnVehicle = Game_Player.prototype.getOnVehicle;
+	Game_Player.prototype.getOnVehicle = function() {
+		if (this._bigSprite.type) {
+			var d = this.direction();
+			var coord = this._bigSprite.occupancy;
+			for (var i = 0; i < coord.length; i++) {
+				if ($gameMap.airship().pos(coord[i].x, coord[i].y)) {
+					this._vehicleType = 'airship';
+					break;
+				}
+			}
+			if (this._vehicleType !== 'airship') {
+				var ahead = this.checkAheadTiles(d);
+				for (var i = 0; i < ahead.length; i++) {
+					if ($gameMap.ship().pos(ahead[i].x, ahead[i].y)) {
+						this._vehicleType = 'ship';
+						break;
+					} else if ($gameMap.boat().pos(ahead[i].x, ahead[i].y)) {
+						this._vehicleType = 'boat';
+						break;
+					}
+				}
+			}
+			if (this.isInVehicle()) {
+				this._vehicleGettingOn = true;
+				if (!this.isInAirship()) {
+					this.forceMoveForward();
+				}
+				this.gatherFollowers();
+			}
+			return this._vehicleGettingOn;
+		}
+		return _Game_Player_getOnVehicle.call(this);
+	};
+	
+	var _Game_Vehicle_getOn = Game_Vehicle.prototype.getOn;
+	Game_Vehicle.prototype.getOn = function() {
+		$gameSystem._bigSprite = $gamePlayer._bigSprite;
+		var x = this.x;
+		var y = this.y;
+		this.setThrough(true);
+		while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
+		while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
+		while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
+		while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+		this.setThrough(false);
+		_Game_Vehicle_getOn.call(this); 
+		this.setBigVehicleSize.call($gamePlayer, this._type);
+		this.initializeBigSprite();
+	};
+	
+	var _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
+	Game_Vehicle.prototype.isLandOk = function(x, y, d) {
+		if ($gamePlayer._bigSprite.type) {
+			if (this.isAirship()) {
+				if (!$gameMap.isAirshipLandOk(x, y)) {
+					return false;
+				}
+				if ($gameMap.eventsXy(x, y).length > 0) {
+					return false;
+				}
+			} else {
+				var forwardTiles = this.checkAheadTiles.call($gamePlayer, d);
+				for (var i = 0; i < forwardTiles.length; i++) {
+					if (!$gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y)) return false;
+					if (!$gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, this.reverseDir(d))) return false;
+					if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) return false;
+				}
+			}
+			return true;
+		}
+		return _Game_Vehicle_isLandOk.call(this, x, y, d);		
+	};
+	
+	var _Game_Map_isAirshipLandOk = Game_Map.prototype.isAirshipLandOk;
+	Game_Map.prototype.isAirshipLandOk = function(x, y) {
+		if ($gamePlayer._bigSprite.type) {
+			var coord = $gamePlayer._bigSprite.occupancy;
+			var check = true;
+			for (var i = 0; i < coord.length; i++) {
+				check = check && this.checkPassage(coord[i].x, coord[i].y, 0x0800) && this.checkPassage(coord[i].x, coord[i].y, 0x0f);
+				if (!check) return check;
+			}
+			return check;
+		}
+		return _Game_Map_isAirshipLandOk.call(this, x, y);
+	};
+
+	var _Game_Vehicle_getOff = Game_Vehicle.prototype.getOff;
+	Game_Vehicle.prototype.getOff = function() {
+		var dir = this._direction;
+		_Game_Vehicle_getOff.call(this);
+		this.setDirection(dir);
+		$gamePlayer.initializeBigSprite();
+		$gamePlayer._bigSprite = $gameSystem._bigSprite;
+		$gameSystem.setupBigPlayerSettings();
+		this.setBigVehicleSize(this._type);
+		this.setEventCoordinates();
+		this.updateEventCoordinates();
+	};
+	
+	var _Game_Player_getOffVehicle = Game_Player.prototype.getOffVehicle;
+	Game_Player.prototype.getOffVehicle = function() {
+		var normal = _Game_Player_getOffVehicle.call(this);
+		while (!$gameMap.isPassable(this.x, this._bigSprite.Y0, this._direction)) {
+			this.forceMoveForward();
+		}
+		return normal;
+	};
 	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
-		UPDATE EVENT SIZE
+		FIX ACTION BUTTON, PLAYER TOUCH AND EVENT TOUCH TRIGGERS
+-------------------------------------------------------------------------------------------------------------------------------------------
+*/
+	
+	var _Game_CharacterBase_checkEventTriggerTouchFront = Game_CharacterBase.prototype.checkEventTriggerTouchFront;
+	Game_CharacterBase.prototype.checkEventTriggerTouchFront = function(d) {
+		if (this._bigSprite.type) {
+			var forwardTiles = this.checkAheadTiles(d);
+			if (forwardTiles) {
+				for (var i = 0; i < forwardTiles.length; i++) {
+					this.checkEventTriggerTouch(forwardTiles[i].x, forwardTiles[i].y);
+				}
+			}			
+		} else {
+			_Game_CharacterBase_checkEventTriggerTouchFront.call(this, d);		
+		}
+	};
+	
+	var _Game_Player_checkEventTriggerHere = Game_Player.prototype.checkEventTriggerHere;
+	Game_Player.prototype.checkEventTriggerHere = function(triggers) {
+		if (this.canStartLocalEvents() && this._bigSprite.type) {
+			var coord = this._bigSprite.occupancy;
+			for (var i = 0; i < coord.length; i++) {
+				this.startMapEvent(coord[i].x, coord[i].y, triggers, false);
+			}
+		}
+		return _Game_Player_checkEventTriggerHere.call(this, triggers);
+	};
+	
+	var _Game_Player_checkEventTriggerThere = Game_Player.prototype.checkEventTriggerThere;
+	Game_Player.prototype.checkEventTriggerThere = function(triggers) {
+		if (this.canStartLocalEvents() && this._bigSprite.type) {
+			var d = this.direction();
+			var forwardTiles = this.checkAheadTiles(d);
+			for (var i = 0; i < forwardTiles.length; i++) {
+				this.startMapEvent(forwardTiles[i].x, forwardTiles[i].y, triggers, true);
+			}			
+		} else _Game_Player_checkEventTriggerThere.call(this, triggers);
+	};
+	
+/* 
+-------------------------------------------------------------------------------------------------------------------------------------------
+		CONFIGURE PASSABILITY
+-------------------------------------------------------------------------------------------------------------------------------------------
+*/	
+	
+	Game_CharacterBase.prototype.isCollidedWithEvents = function(x, y) {
+		if (!this.isNormalPriority()) return false;
+		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
+		if (events.length <= 0) return false;
+		for (var i = 0; i < events.length; i++) {
+			if (events[i] !== this) return true;
+		}
+		return false;
+	};
+	
+	Game_Event.prototype.isCollidedWithEvents = function(x, y) {
+		if (!this.isNormalPriority())return false;
+		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
+		if (events.length <= 0) return false;	
+		for (var i = 0; i < events.length; i++) {
+			if (events[i] !== this) return true;
+		}
+		return false;
+	};
+	
+	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
+	Game_CharacterBase.prototype.canPass = function(x, y, d) {
+		if (this._bigSprite.type) {
+			if (this.isThrough() || this.isDebugThrough())return true;
+			if (this === $gamePlayer && this.isInAirship())return true;
+			var forwardTiles = this.checkAheadTiles(d); 
+			for (var i = 0; i < forwardTiles.length; i++) {
+				if (!$gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y)) return false;
+				if (this === $gamePlayer && this.isInBoat()) {
+					if (!$gameMap.isBoatPassable(forwardTiles[i].x, forwardTiles[i].y)) return false;
+				} else if (this === $gamePlayer && this.isInShip()) {
+					if (!$gameMap.isShipPassable(forwardTiles[i].x, forwardTiles[i].y)) return false;
+				} else if (!$gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, d)) return false;
+				if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) return false;
+			} 
+			return true;
+		}
+		return _Game_CharacterBase_canPass.call(this, x, y, d);
+	};
+	
+	var _Game_CharacterBase_canPassDiagonally = Game_CharacterBase.prototype.canPassDiagonally;
+	Game_CharacterBase.prototype.canPassDiagonally = function(x, y, horz, vert) {
+		if (this._bigSprite.type) {
+			if (this.isThrough() || this.isDebugThrough()) return true;
+			if (this === $gamePlayer && this.isInAirship())return true;
+			var tilesToCheck = this.checkDiagonalTiles(horz, vert);
+			for (var i = 0; i < tilesToCheck.length; i++) {
+				if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) return false;	
+				if (this === $gamePlayer && this.isInBoat()) {
+					if (!$gameMap.isBoatPassable(tilesToCheck[i].x, tilesToCheck[i].y)) return false;					
+				} else if (this === $gamePlayer && this.isInShip()) {
+					if (!$gameMap.isShipPassable(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
+				} else if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz) || !$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) return false;				
+				if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
+			} 
+			return true;
+		}
+		return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);		
+	};	
+	
+/* 
+-------------------------------------------------------------------------------------------------------------------------------------------
+		MOVEMENT UPDATE EVENT SIZE
 -------------------------------------------------------------------------------------------------------------------------------------------
 */	
 	
 	var _Game_Character_turnTowardCharacter = Game_Character.prototype.turnTowardCharacter;
 	Game_Character.prototype.turnTowardCharacter = function(character) {
-		if (this._bigSpriteType) {
-			var coord = this._eventOccupancy.coordinates;
+		if (this._bigSprite.type) {
+			var coord = this._bigSprite.occupancy;
 			var nearestCoord = null;
 			var sx = this.deltaXFrom(character.x);
 			var sy = this.deltaYFrom(character.y);
 			for (var i = 0; i < coord.length; i++) {
 				var dx = $gameMap.deltaX(coord[i].x, character.x);
 				var dy = $gameMap.deltaX(coord[i].y, character.y);
-				if (Math.abs(dx) + Math.abs(dy) < Math.abs(sx) + Math.abs(sy)) {
+				if (Math.abs(dx) + Math.abs(dy) <= Math.abs(sx) + Math.abs(sy)) {
 					sx = dx;
 					sy = dy;					
 				}
@@ -964,18 +1071,32 @@
 			_Game_Character_turnTowardCharacter.call(this, character);
 		}
 	};
-		
+	
 	var _Game_CharacterBase_setDirection = Game_CharacterBase.prototype.setDirection;
 	Game_CharacterBase.prototype.setDirection = function(d) {
 		if (!$gameMap || !$gameMap.tileEvents) return _Game_CharacterBase_setDirection.call(this, d);
-		if (this._bigSpriteType) {
-			oldCoord = this._eventOccupancy.coordinates; 
+		if (this._bigSprite.type) {
+			oldCoord = this._bigSprite.occupancy; 
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
 			newCoord = this.setEventCoordinates(); 
 			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
-					this._eventOccupancy.coordinates = oldCoord;
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+					this._bigSprite.occupancy = oldCoord;
+					_Game_CharacterBase_setDirection.call(this, oldDir);
+				}
+				if (this === $gamePlayer && this.isInBoat()) {
+					if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
+						this._bigSprite.occupancy = oldCoord;
+						_Game_CharacterBase_setDirection.call(this, oldDir);
+					}
+				} else if (this === $gamePlayer && this.isInShip()) {
+					if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
+						this._bigSprite.occupancy = oldCoord;
+						_Game_CharacterBase_setDirection.call(this, oldDir);
+					}
+				} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, d)) {
+					this._bigSprite.occupancy = oldCoord;
 					_Game_CharacterBase_setDirection.call(this, oldDir);
 				}
 			} 
@@ -988,15 +1109,15 @@
 	var _Game_CharacterBase_setThrough = Game_CharacterBase.prototype.setThrough;
 	Game_CharacterBase.prototype.setThrough = function(through) {
 		_Game_CharacterBase_setThrough.call(this, through);
-		if (this._bigSpriteType) {
+		if (this._bigSprite.type) {
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
 		}
 	};
 	
-	var _Game_Event_moveStraight = Game_Event.prototype.moveStraight;
-	Game_Event.prototype.moveStraight = function(d) {		
-		if (this._bigSpriteType) {
+	var _Game_Character_moveStraight = Game_Character.prototype.moveStraight;
+	Game_Character.prototype.moveStraight = function(d) {		
+		if (this._bigSprite.type) {
 			this.setDirection(d);
 			if (d === this._direction) { 
 				this.setMovementSuccess(this.canPass(this._x, this._y, d));			
@@ -1019,15 +1140,15 @@
 				this.checkEventTriggerTouchFront(this._direction);
 			}			
 		} else {
-			_Game_Event_moveStraight.call(this, d);
+			_Game_Character_moveStraight.call(this, d);
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
 		}
 	};
 	
-	var _Game_Event_moveDiagonally = Game_Event.prototype.moveDiagonally;
-	Game_Event.prototype.moveDiagonally = function(horz, vert) {	
-		if (this._bigSpriteType) {
+	var _Game_Character_moveDiagonally = Game_Character.prototype.moveDiagonally;
+	Game_Character.prototype.moveDiagonally = function(horz, vert) {	
+		if (this._bigSprite.type) {
 			this.setMovementSuccess(this.canPassDiagonally(this._x, this._y, horz, vert));		
 			if (this.isMovementSucceeded()) {
 				this._x = $gameMap.roundXWithDirection(this._x, horz);
@@ -1050,15 +1171,15 @@
 				this.updateEventCoordinates();
 			}		
 		} else {
-			_Game_Event_moveDiagonally.call(this, horz, vert);
+			_Game_Character_moveDiagonally.call(this, horz, vert);
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
 		}
 	};
 	
-	var _Game_Event_jump = Game_Event.prototype.jump;
-	Game_Event.prototype.jump = function(xPlus, yPlus) {
-		if (this._bigSpriteType) {
+	var _Game_Character_jump = Game_Character.prototype.jump;
+	Game_Character.prototype.jump = function(xPlus, yPlus) {
+		if (this._bigSprite.type) {
 			if (Math.abs(xPlus) > Math.abs(yPlus)) {
 				if (xPlus !== 0) {
 					var d = xPlus < 0 ? 4 : 6;
@@ -1073,17 +1194,43 @@
 				}
 			}
 			if (canTurn) {
-				var oldCoord = this._eventOccupancy.coordinates;	
+				var oldCoord = this._bigSprite.occupancy;	
 				var oldX = this._x;
 				var oldY = this._y;
 				this._x += xPlus;
 				this._y += yPlus;
 				var newCoord = this.setEventCoordinates();
 				for (var i = 0; i < newCoord.length; i++) {
-					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, this.isMapPassable(newCoord[i].x, newCoord[i].y, this._direction)) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 						this._x = oldX;
 						this._y = oldY;
-						this._eventOccupancy.coordinates = oldCoord;
+						this._bigSprite.occupancy = oldCoord;
+						this.resetStopCount();
+						this.straighten();
+						return;
+					}
+					if (this === $gamePlayer && this.isInBoat()) {
+						if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
+							this._x = oldX;
+							this._y = oldY;
+							this._bigSprite.occupancy = oldCoord;
+							this.resetStopCount();
+							this.straighten();
+							return;
+						}
+					} else if (this === $gamePlayer && this.isInShip()) {
+						if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
+							this._x = oldX;
+							this._y = oldY;
+							this._bigSprite.occupancy = oldCoord;
+							this.resetStopCount();
+							this.straighten();
+							return;
+						}
+					} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, d)) {
+						this._x = oldX;
+						this._y = oldY;
+						this._bigSprite.occupancy = oldCoord;
 						this.resetStopCount();
 						this.straighten();
 						return;
@@ -1097,7 +1244,7 @@
 				this.straighten();
 			}
 		} else {
-			_Game_Event_jump.call(this, xPlus, yPlus);
+			_Game_Character_jump.call(this, xPlus, yPlus);
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
 		}
@@ -1105,15 +1252,15 @@
 	
 	var _Game_Character_deltaYFrom = Game_Character.prototype.deltaYFrom;
 	Game_Character.prototype.deltaYFrom = function(y) {
-		if (this._bigSpriteType && this._bigSpriteType.includes('B')) return $gameMap.deltaY(this._bigSpriteY0, y);
+		if (this._bigSprite.type && this._bigSprite.type.includes('B')) return $gameMap.deltaY(this._bigSprite.Y0, y);
 		return _Game_Character_deltaYFrom.call(this, y);
 	};
 	
 	var _Game_Character_moveRandom = Game_Character.prototype.moveRandom;
 	Game_Character.prototype.moveRandom = function() {
-		if (this._bigSpriteType && this._bigSpriteType.includes('B')) {
+		if (this._bigSprite.type && this._bigSprite.type.includes('B')) {
 			var d = 2 + Math.randomInt(4) * 2;
-			if (this.canPass(this.x, this._bigSpriteY0, d)) {
+			if (this.canPass(this.x, this._bigSprite.Y0, d)) {
 				this.moveStraight(d);
 			}
 		} else {
@@ -1123,48 +1270,100 @@
 	
 	var _Game_Character_swap = Game_Character.prototype.swap;
 	Game_Character.prototype.swap = function(character) {
-		if (this._bigSpriteType) {
+		if (this._bigSprite.type) {
 			var newX = character.x;
-			var newY = character.y + Math.floor(this._spriteSize / 2);
-			var oldCoord = this._eventOccupancy.coordinates;
+			var newY = character.y + Math.floor(this._bigSprite.size / 2);
+			var oldCoord = this._bigSprite.occupancy;
 			var oldX = this.x;
 			var oldY = this.y;
 			var oldcharX = character.x;
 			var oldcharY = character.y;
-			character.locate(this.x, this._bigSpriteY0);
+			character.locate(this.x, this._bigSprite.Y0);
 			this.locate(newX, newY);
 			this.resetStopCount();
 			this.straighten();
-			var newCoord = this._eventOccupancy.coordinates;
+			var newCoord = this._bigSprite.occupancy;
 			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, this._direction) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					character.locate(oldcharX, oldcharY);
 					this.locate(oldX, oldY);
-					this._eventOccupancy.coordinates = oldCoord;
+					this._bigSprite.occupancy = oldCoord;
+					this.resetStopCount();
+					this.straighten();
+					return;
+				}
+				if (this === $gamePlayer && this.isInBoat()) {
+					if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
+						character.locate(oldcharX, oldcharY);
+						this.locate(oldX, oldY);
+						this._bigSprite.occupancy = oldCoord;
+						this.resetStopCount();
+						this.straighten();
+						return;
+					}
+				} else if (this === $gamePlayer && this.isInShip()) {
+					if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
+						character.locate(oldcharX, oldcharY);
+						this.locate(oldX, oldY);
+						this._bigSprite.occupancy = oldCoord;
+						this.resetStopCount();
+						this.straighten();
+						return;
+					}
+				} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, this._direction)) {
+					character.locate(oldcharX, oldcharY);
+					this.locate(oldX, oldY);
+					this._bigSprite.occupancy = oldCoord;
 					this.resetStopCount();
 					this.straighten();
 					return;
 				}
 			}
 			this.updateEventCoordinates();
-		} else if (character._bigSpriteType) {
+		} else if (character._bigSprite.type) {
 			var newX = character.x;
-			var newY = character._bigSpriteY0;
+			var newY = character._bigSprite.Y0;
 			var oldX = this.x;
 			var oldY = this.y;
 			var oldcharX = character.x;
 			var oldcharY = character.y;
-			var oldCoord = character._eventOccupancy.coordinates;			
-			character.locate(this.x, this.y + Math.floor(character._spriteSize / 2));
+			var oldCoord = character._bigSprite.occupancy;			
+			character.locate(this.x, this.y + Math.floor(character._bigSprite.size / 2));
 			this.locate(newX, newY);			
 			this.resetStopCount();
 			this.straighten();
-			var newCoord = character._eventOccupancy.coordinates;
+			var newCoord = character._bigSprite.occupancy;
 			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || !character.isMapPassable(newCoord[i].x, newCoord[i].y, character._direction) || character.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || character.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					character.locate(oldcharX, oldcharY);
 					this.locate(oldX, oldY);
-					character._eventOccupancy.coordinates = oldCoord;
+					character._bigSprite.occupancy = oldCoord;
+					this.resetStopCount();
+					this.straighten();
+					return;
+				}
+				if (character === $gamePlayer && character.isInBoat()) {
+					if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
+						character.locate(oldcharX, oldcharY);
+						this.locate(oldX, oldY);
+						character._bigSprite.occupancy = oldCoord;
+						this.resetStopCount();
+						this.straighten();
+						return;
+					}
+				} else if (character === $gamePlayer && character.isInShip()) {
+					if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
+						character.locate(oldcharX, oldcharY);
+						this.locate(oldX, oldY);
+						character._bigSprite.occupancy = oldCoord;
+						this.resetStopCount();
+						this.straighten();
+						return;
+					}
+				} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, character._direction)) {
+					character.locate(oldcharX, oldcharY);
+					this.locate(oldX, oldY);
+					character._bigSprite.occupancy = oldCoord;
 					this.resetStopCount();
 					this.straighten();
 					return;
@@ -1182,7 +1381,7 @@
 	var _Game_CharacterBase_locate = Game_CharacterBase.prototype.locate;
 	Game_CharacterBase.prototype.locate = function(x, y) {
 		_Game_CharacterBase_locate.call(this, x, y);
-		if (this._eventOccupancy) {
+		if (this._bigSprite.occupancy) {
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
 		}
@@ -1190,7 +1389,7 @@
 	
 	var _Game_Character_findDirectionTo = Game_Character.prototype.findDirectionTo;
 	Game_Character.prototype.findDirectionTo = function(goalX, goalY) {
-		if (this._bigSpriteType && this._bigSpriteType.includes('B')) {
+		if (this._bigSprite.type && this._bigSprite.type.includes('B')) {
 			var searchLimit = this.searchLimit();
 			var mapWidth = $gameMap.width();
 			var nodeList = [];
@@ -1199,13 +1398,13 @@
 			var start = {};
 			var best = start;
 
-			if (this.x === goalX && this._bigSpriteY0 === goalY) {
+			if (this.x === goalX && this._bigSprite.Y0 === goalY) {
 				return 0;
 			}
 
 			start.parent = null;
 			start.x = this.x;
-			start.y = this._bigSpriteY0;
+			start.y = this._bigSprite.Y0;
 			start.g = 0;
 			start.f = $gameMap.distance(start.x, start.y, goalX, goalY);
 			nodeList.push(start);
@@ -1305,129 +1504,5 @@
 			_Game_Character_findDirectionTo.call(this, goalX, goalY);
 		}
 	};
-	
-
-/* 
--------------------------------------------------------------------------------------------------------------------------------------------
-		FIX ACTION BUTTON, PLAYER TOUCH AND EVENT TOUCH TRIGGERS
--------------------------------------------------------------------------------------------------------------------------------------------
-*/
-	
-	var _Game_CharacterBase_checkEventTriggerTouchFront = Game_CharacterBase.prototype.checkEventTriggerTouchFront;
-	Game_CharacterBase.prototype.checkEventTriggerTouchFront = function(d) {
-		if (this._bigSpriteType) {
-			var forwardTiles = this.checkAheadTiles(d);
-			if (forwardTiles) {
-				for (var i = 0; i < forwardTiles.length; i++) {
-					this.checkEventTriggerTouch(forwardTiles[i].x, forwardTiles[i].y);
-				}
-			}			
-		} else {
-			_Game_CharacterBase_checkEventTriggerTouchFront.call(this, d);		
-		}
-	};
-	
-	var _Game_Player_startMapEvent = Game_Player.prototype.startMapEvent;
-	Game_Player.prototype.startMapEvent = function(x, y, triggers, normal) {
-		if (!$gameMap.isEventRunning()) {
-			var eventHere = $gameMap.eventsXy(x, y); 
-			for (var i = 0; i < eventHere.length; i++) {
-				if (!$gameMap.isEventRunning() && eventHere[i] && eventHere[i].isTriggerIn(triggers)) eventHere[i].start();
-			}
-		}
-	};
-	
-	var _Game_Player_moveByInput = Game_Player.prototype.moveByInput;
-	Game_Player.prototype.moveByInput = function() {
-		_Game_Player_moveByInput.call(this);
-		this.setEventCoordinates();
-		this.updateEventCoordinates();
-	};
-	
-	var _Game_Player_checkEventTriggerThere = Game_Player.prototype.checkEventTriggerThere;
-	Game_Player.prototype.checkEventTriggerThere = function(triggers) {
-		if (this.canStartLocalEvents() && this._bigSpriteType) {
-			var d = this.direction();
-			var forwardTiles = this.checkAheadTiles(d);
-			for (var i = 0; i < forwardTiles.length; i++) {
-				this.startMapEvent(forwardTiles[i].x, forwardTiles[i].y, triggers, true);
-			}			
-		} else _Game_Player_checkEventTriggerThere.call(this, triggers);
-	};
-	
-/* 
--------------------------------------------------------------------------------------------------------------------------------------------
-		CONFIGURE PASSABILITY
--------------------------------------------------------------------------------------------------------------------------------------------
-*/	
-	Game_CharacterBase.prototype.isCollidedWithEvents = function(x, y) {
-		if (!this.isNormalPriority()) return false;
-		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
-		if (events.length <= 0) return false;
-		for (var i = 0; i < events.length; i++) {
-			if (events[i] !== this) return true;
-		}
-		return false;
-	};
-	
-	Game_Event.prototype.isCollidedWithEvents = function(x, y) {
-		if (!this.isNormalPriority())return false;
-		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
-		if (events.length <= 0) return false;	
-		for (var i = 0; i < events.length; i++) {
-			if (events[i] !== this) return true;
-		}
-		return false;
-	};
-	
-	var _Game_CharacterBase_canPass = Game_CharacterBase.prototype.canPass;
-	Game_CharacterBase.prototype.canPass = function(x, y, d) {
-		if (this._bigSpriteType) {
-			var forwardTiles = this.checkAheadTiles(d); 
-			for (var i = 0; i < forwardTiles.length; i++) {
-				if (!$gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y)) {
-					return false;
-				}
-				if (this.isThrough() || this.isDebugThrough()) {
-					return true;
-				}
-				if (!$gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, d)) { 
-					return false;
-				}
-				if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) {
-					return false;
-				}
-			} 
-			return true;
-		}
-		return _Game_CharacterBase_canPass.call(this, x, y, d);
-	};
-	
-	var _Game_CharacterBase_canPassDiagonally = Game_CharacterBase.prototype.canPassDiagonally;
-	Game_CharacterBase.prototype.canPassDiagonally = function(x, y, horz, vert) {
-		if (this._eventId && this._bigSpriteType) {
-			var tilesToCheck = this.checkDiagonalTiles(horz, vert);
-			for (var i = 0; i < tilesToCheck.length; i++) {
-				if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) {
-					return false;
-				}
-				if (this.isThrough() || this.isDebugThrough()) {
-					return true;
-				}
-				if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz)) { 
-					return false;
-				}
-				if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) { 
-					return false;
-				} 
-				if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) {
-					return false;
-				}
-			} 
-			return true;
-		}
-		return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);		
-	};
-	
 	
 })();
