@@ -610,11 +610,11 @@
 	Game_CharacterBase.prototype.updateEventCoordinates = function() { 
 		for (var i = 0; i < $gameMap._occupiedTiles.length; i++) {
 			if ($gameMap._occupiedTiles[i].event === this) { 
-				$gameMap._occupiedTiles[i] = this._bigSprite.occupancy;
+				$gameMap._occupiedTiles[i].coord = this._bigSprite.occupancy;
 				return;
 			}
 		}
-		$gameMap._occupiedTiles.push(this._bigSprite.occupancy);
+		$gameMap._occupiedTiles.push({'event': this, 'coord': this._bigSprite.occupancy});
 	};
 	
 	Game_Character.prototype.getTypeBOccupancy = function() {
