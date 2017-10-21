@@ -2,9 +2,25 @@
  * @plugindesc Big Sprites
  * @author Dahlys
  * 
+ * @param Diagonal Movement
+ * @desc Are you using a diagonal movement plugin?
+ * @default false
+ * 
+ * @param Diagonal Block
+ * @desc Prevents random sprite overlapping from diagonal movement.
+ * @default true
+ * 
  * @param Auto Set Comment
  * @desc Automatically set 1st bigSprite comment on event page.
  * @default true
+ * 
+ * @param Ev All Direction Trigger
+ * @desc Big event Event Touch trigger as long as player is next to it, regardless of direction faced.
+ * @default false
+ * 
+ * @param Pl All Direction Trigger
+ * @desc Big player can trigger events regardless of direction faced. Applicable to Action Button and Player Touch.
+ * @default false
  *
  * @param Boat Size
  * @desc Size of boat
@@ -14,10 +30,22 @@
  * 
  * @param Airship Size
  * @desc Size of airship
+ * 
+ * @param Vehicle Side Get Off
+ * @desc Get off the side of big vehicle instead of the front. More visually appealing.
+ * @default true
+ * 
+ * @param Right Hand Drive
+ * @desc Because getting of the side of the vehicle is left hand drive by default.
+ * @default false
+ * 
+ * @param Touch Fix B
+ * @desc Fix touch input if using type B big player/vehicle. Will overwrite findDirectionTo!
+ * @default false
  *
  * @help
  * ==============================================================================
- *                                 BIG SPRITES
+ *                                  BIG SPRITES
  * ==============================================================================
  * 
  * NOTE: I am following the map grid, so partially blocked tiles are not a thing.
@@ -27,12 +55,14 @@
  * same way. Only solid tiles are triggerable. The main character tile does not 
  * have to be solid.
  *
- * Also, different kinds of big sprites are treated differently. These are the
- * categories:
+ * In this plugin, different kinds of big sprites are treated differently. These 
+ * are the categories:
  *
- * A) No matter how sprite moves/turns, the same tiles remain solid. e.g. A 
- *    giant mecha
+ * A) Draws a rectangle around the base tile. No matter how sprite moves/turns, 
+ *    the same tiles remain solid. e.g. A giant mecha
  * B) The middle of the big sprite image is solid and the rest is relative to it.
+ *    The sprite must be a square, but doesn't have to be all solid. This is to
+ *    facilitate shifting the center of the event to the center of the sprite. 
  *    e.g. A flying spaghetti monster, a large battleship
  * C) Complete customization of big sprite solidity based on direction faced.
  *
@@ -41,142 +71,165 @@
  * touch trigger.
  *
  * ------------------------------------------------------------------------------
- *                                   FOR EVENTS
+ *                              PLUGIN PARAMETERS
  * ------------------------------------------------------------------------------
  *
- * For events, you can use comments to override notetags. The contents of the 
- * comments are the same as the relevant notetags.
+ * Diagonal Movement: Tested with Galv's diagonal movement plugin. Fixes diagonal
+ * movement for big player/vehicle sprites.
  *
- * When an event page is initialized, the event sprite size is set by notetag.
- * After that the event page is searched for the first bigSprite comment. If
- * found, it will override/add to the notetag. Subsequent bigSprite comments will 
- * be processed when the event is activated by its trigger. 
+ * Diagonal Block: Diagonal movement not allowed when blocked by an impassable
+ * tile. Player has to move NSEW. This prevents random image overlapping with 
+ * impassable tiles.
+ *
+ * Auto Set Comment: The first bigSprite comment on an event page is executed
+ * when a new map is loaded. Turn off if you're using notetags and don't want
+ * them overwritten by another comment. Special events (e.g. Galv spawned events)
+ * that don't exist on the current map data can only be upsized automatically
+ * using the first comment.
+ *
+ * Ev All Direction Trigger: Because big events cannot turn on a map with many
+ * obstacles, you can now make the Event Touch trigger activate the moment the
+ * player is adjacent to the event, instead of only when the front of the event
+ * hits the player.
+ *
+ * Pl All Direction Trigger: Same as above, but for the big player. Player Touch
+ * and Action Button triggers will fire regardless of the direction the player is
+ * facing.
+ *
+ * Vehicle Size: Fill in parameters for each vehicle. Leave blank for normal 
+ * sized vehicles. Big vehicles can only be rectangles/circles/diamonds for now.
+ *
+ * Parameters for big vehicle Type A: above left right
+ * where above = no. of tiles extended upwards
+ *       left  = no. of tiles to the left
+ *       right = no. of tiles to the right
+ * e.g. 1 1 1 draws a solid rectangle 1 tile up, 1 tile left, and 1 tile right 
+ * and makes the vehicle always occupy a 3x2 rectangle.
+ *
+ * Parameters for big vehicle Type B: spritesize front back left right
+ * where spritesize = how many tiles is the length/width of the sprite?
+ *       front      = no. of tiles to the front of new center
+ *       back       = no. of tiles to the back of new center
+ *       left       = no. of tiles to the left of new center
+ *       right      = no. of tiles to the right of new center
+ * e.g. 3 1 1 0 0 Vehicle is 3x3 tiles per sprite. 1 tile is added to the front
+ * and 1 to the back (e.g. a ship). Whenever the vehicle turns, the solid tiles
+ * will also be rotated accordingly. i.e. When horizontal, only the center 
+ * horizontal row is solid. When vertical, only the certer vertical row is solid.
  * 
- * e.g. Action Button Trigger
- * Comment: <bigSprite: 1 2 3>
- * Text: I'm going to transform!
- * Show Picture
- * Comment: <bigSprite: 5 circle 2>
+ * Parameters for big vehicle Type C: [down] [left] [right] [up]
+ * where [direction] = [above left right] and above/left/right are the same as 
+ * Type A.
+ * e.g. [1 0 0] [0 1 1] [0 1 1] [1 0 0] creates a vehicle that is 1x2 tiles when 
+ * vertical and 3x1 tiles when horizontal.
+ *
+ * Parameters for big Circle vehicle Type B: spritesize circle radius
+ * where spritesize = how many tiles is the length/width of the sprite?
+ *       radius     = radius of the circle.
+ * e.g. 7 circle 3 makes the big vehicle a circle of radius 3 tiles around the 
+ * center of the big sprite image.
+ *
+ * Parameters for big Diamond vehicle Type B: spritesize diamond radius
+ * where spritesize = how many tiles is the length/width of the sprite?
+ *       radius     = radius of the diamond.
+ * e.g. 5 diamond 2 makes the big vehicle a diamond of radius 2 tiles around 
+ * the center of the big sprite image.
  * 
- * The initial size is 1 2 3. When the event is activated by action button, 
- * the second bigSprite command is executed and the event will change size to 
- * 5 circle 2. This is good for transforming events!
+ * Vehicle Side Get Off: Get off the vehicle when the side is aligned with the
+ * landing point and 'ok' is triggered. Looks nicer than crawling over the front
+ * of the vehicle. Good for car parking and boat docking on the side.
+ *
+ * Right Hand Drive: Only effective when Vehicle Side Get Off is true. Left Hand 
+ * Drive by default, which means player will prefer to get off the vehicle on the 
+ * right side as opposed to the left. Turning on RHD will flip this.
+ *
+ * Touch Fix B: Fixes touch input pathfinding for Type B player and vehicles by
+ * using the new center (sprite image center). Be careful as it overwrites the
+ * default findDirectionTo command. Normal-sized player and vehicles should be
+ * completely unaffected even if this is on.
  *
  * ------------------------------------------------------------------------------
- *                                   FOR PLAYER
+ *                                  FOR PLAYER
  * ------------------------------------------------------------------------------
  *
- * When the character is the PLAYER, bigSprite is only triggered by
- * running an event containing the appropriate comment. It's the same as using a
- * plugin command, except it's a comment instead.
- *
- * ------------------------------------------------------------------------------
- *                                   CATEGORY A
- * ------------------------------------------------------------------------------
+ * Player can only be upsized by running an event containing a bigPlayer comment.
+ * It's the same as using a plugin command, except it's a comment :) When a new
+ * bigPlayer comment is run, the previous one is overwritten.
  * 
- * For category A, the character is expanded upwards and sideways but not 
- * downwards since the default character tile is always at the middle bottom.
+ * The commments for each category are:
  *
- * FOR PLAYER, Comment: <bigPlayer: above left right>
+ * Type A: <bigPlayer: above left right>
  *
- * FOR EVENT, Notetag/Comment: <bigEvent: above left right>
+ * Type B: <bigPlayer: spritesize front back left right>
  *
- * e.g. <bigEvent: 1 1 1> creates a rectagle around the base event 1 tile
- * above, 1 tile to the left and 1 tile to the right to a total of 6 solid tiles.
+ * Type B circle: <bigPlayer: spritesize circle radius>
  *
- * You can use more notes/comments to customize the shape, tile by tile.
+ * Type B diamond: <bigPlayer: spritesize diamond radius>
  *
- * Notetag/Comment: <bigEventEx: dx,dy dx,dy dx,dy>
- *  
- * e.g. 
- * Notetag: <bigEvent: 0 1 1> <bigEventEx: -1,-1 -1,-2> 
- * Event has a base rectangle 3 tiles long and 2 extra solid tiles: 1 and 2  
- * tiles above the main event and 1 tile to the left. The result of the 2 
- * commands is an L-shaped big event!
+ * Type C: <bigPlayer: [down] [left] [right] [up]>
  *
- * You can add as many extra tiles as you want.
+ * Reset to normal size: <bigPlayer: reset>
  *
- * ------------------------------------------------------------------------------
- *                                   CATEGORY B
- * ------------------------------------------------------------------------------
- *
- * For category B, the center of the character is shifted up to match the sprite.
- * This makes it possible to make the default event tile passable. Hence, to
- * facilitate turning for such an character, the sprite box is highly recommended 
- * to be a square.
- *
- * FOR PLAYER, Comment: <bigPlayer: spritesize front back left right>
- *
- * FOR EVENT, Notetag/Comment: <bigEvent: spritesize front back left right>
+ * See plugin parameters vehicle size section for what above, left, right,
+ * spritesize, front, back, radius, and direction mean.
  * 
- * where spritesize, front, back, left, and right are numbers. 
- * e.g. <bigEvent: 7 1 1 1 0> shifts the center of the event 3 tiles up to 
- * match the center of the big sprite image. It then adds 1 tile front, 1 tile 
- * back, and 1 to the left making the event occupy a rectangular space that is 
- * 2x3 tiles.
- *
- * Besides big rectangular events, big diamond-shaped characters are also 
- * possible. The notetag for this is: 
- *
- * FOR PLAYER, Comment: <bigPlayer: spritesize diamond radius>
- *
- * FOR EVENT, Notetag/Comment: <bigEvent: spritesize diamond radius>
- *
- * e.g. <bigEvent: 7 diamond 3> adds all tiles <= 3 tiles away to event size.
- *
- * You can also have a circular big character with notetag:
- *
- * FOR PLAYER, Comment: <bigPlayer: spritesize circle radius>
- *
- * FOR EVENT, Notetag/Comment: <bigEvent: spritesize circle radius>
- *
- * e.g. <bigEvent: 7 circle 4> expands the event size by a radius of 4 tiles.
- *
- * Extra tiles can be added to customize the shape. These tile coordinates are
- * measured relative to the new center, not the base event.
- *
- * FOR PLAYER, Comment: <bigPlayerEx: dx,dy dx,dy dx,dy>
- *
- * FOR EVENT, Notetag/Comment: <bigEventEx: dx,dy dx,dy dx,dy>
+ * To go beyond the basic rectangle/circle/diamond shape, use the following
+ * comments:
  * 
- * ------------------------------------------------------------------------------
- *                                   CATEGORY C
- * ------------------------------------------------------------------------------
- * 
- * This is the most versatile mode but also the most complicated to set up. You
- * can fully customize which tile will be solid in all 4 directions.
+ * Type A: <bigPlayer: above left right> <bigPlayerEx: dx,dy dx,dy dx,dy> 
+ * where dx is the horizontal distance from the main tile, and dy is the vertical
+ * distance. If you wish to use Ex without the basic rectangle, input:
+ * <bigPlayer: 0 0 0> <bigPlayerEx: dx,dy dx,dy dx,dy> 
+ * e.g. <bigPlayer: 0 0 0> <bigPlayerEx: 0,-1 1,-1>
+ * Only the tile right above the main tile and the tile to the top-right of the
+ * main tile are solid.
+ * You can add as many dx,dy pairs as you want.
  *
- * Like category A, the default tile is not shifted and everything is relative to
- * the main tile.
+ * Type B: <bigPlayerEx: dx,dy dx,dy dx,dy>
+ * The basic type B bigPlayer command is optional. dx and dy are relative to the
+ * new center for the sprite facing down. When the sprite turns around, the extra
+ * solid tiles will rotate accordingly.
  *
- * FOR PLAYER, Comment: <bigPlayer: [down] [left] [right] [up]>
- *
- * FOR EVENT, Notetag/Comment: <bigEvent: [down] [left] [right] [up]>
- * where [direction] = [above left right]
- *
- * e.g. <bigEvent: [1 0 0] [0 1 1] [0 1 1] [1 0 0]> will create a big event that
- * is 2 tiles high when facing up/down, but 3 tiles wide when facing left/right.
- *
- * For even more customization, you can add tile by tile.
- *
- * FOR PLAYER, Comment: <bigPlayerEx: [down] [left] [right] [up]>
- *
- * FOR EVENT, Notetag/Commment: <bigEventEx: [down] [left] [right] [up]>
+ * Type C: <bigPlayerEx: [down] [left] [right] [up]>
  * where [direction] = [dx,dy dx,dy dx,dy]
+ * Type C can also be used without the bigPlayer command. Type C bigPlayerEx has 
+ * the highest level of customization as you determine which tiles are solid for
+ * every single direction (Type C bigPlayer always has the main tile solid).
+ * e.g. <bigPlayerEx: [0,1] [1,-1] [1,0] [0,-1]>
+ *
+ * ------------------------------------------------------------------------------
+ *                                  FOR EVENTS
+ * ------------------------------------------------------------------------------
  * 
- * ------------------------------------------------------------------------------
- *                            BIG EVENT/PLAYER EX ONLY
- * ------------------------------------------------------------------------------
+ * Events can be upsized using either notetags or comments. Comments always 
+ * override notetags. The contents of the comments and notetags are identical.
+ * When a new bigEvent comment is run, the previous one is overwritten.
  *
- * bigSpriteEx used without bigSprite will default to Category B, but with the
- * event origin at the base tile. It will rotate when the sprite turns. To use
- * Category A type bigSpriteEx only:
+ * Type A: <bigEvent: above left right>
  *
- * FOR PLAYER, commment: <bigPlayer: 0 0 0> <bigPlayerEx: dx,dy dx,dy dx,dy>
+ * Type B: <bigEvent: spritesize front back left right>
  *
- * FOR EVENTS, notetag/comment <bigEvent: 0 0 0> <bigEventEx: dx,dy dx,dy dx,dy>
+ * Type B circle: <bigEvent: spritesize circle radius>
  *
- * Category C type bigSpriteEx can be used as is.
+ * Type B diamond: <bigEvent: spritesize diamond radius>
+ *
+ * Type C: <bigEvent: [down] [left] [right] [up]>
+ *
+ * Reset to normal size: <bigEvent: reset>
+ *
+ * See plugin parameters vehicle size section for what above, left, right,
+ * spritesize, front, back, radius, and direction mean.
+ *
+ * And custom shapes as well:
+ *
+ * Type A: <bigPlayer: above left right> <bigPlayerEx: dx,dy dx,dy dx,dy> 
+ *
+ * Type B: <bigPlayerEx: dx,dy dx,dy dx,dy>
+ *
+ * Type C: <bigPlayerEx: [down] [left] [right] [up]>
+ * where [direction] = [dx,dy dx,dy dx,dy]
+ *
+ * See Player section for what dx and dy mean.
  *
 */
 
@@ -189,10 +242,17 @@
 */	
 	
 	var parameters = PluginManager.parameters('Dahlys_BigSprites');
-	var autoSetComment = eval(parameters['Auto Set Comment']) || true;
+	var diagMovement = eval(parameters['Diagonal Movement']);
+	var diagBlock = eval(parameters['Diagonal Block']);
+	var autoSetComment = eval(parameters['Auto Set Comment']);
+	var Ev_ADT = eval(parameters['Ev All Direction Trigger']);
+	var Pl_ADT = eval(parameters['Pl All Direction Trigger']);
 	var bigBoat = String(parameters['Boat Size']) || null;
 	var bigShip = String(parameters['Ship Size']) || null;
 	var bigAirship = String(parameters['Airship Size']) || null;
+	var sideUnload = eval(parameters['Vehicle Side Get Off']);
+	var RHD = eval(parameters['Right Hand Drive']);
+	var touchFixB = eval(parameters['Touch Fix B']);
 	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -258,100 +318,14 @@
 		if (this.isSpawnEvent) return;
 		var note = $dataMap.events[this._eventId].meta.bigSprite;
 		if (!note) return;		
-		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/
-		var capturingRegex = /(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)/;
-		var capturingRegex2 = /(\d+)(?: )(?:diamond )(\d+)/i;
-		var capturingRegex3 = /(\d+)(?: )(?:circle )(\d+)/i;
-		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/	
-		if (note.match(/\d+ \d+ \d+ \d+ \d+/)) {
-			var params = capturingRegex.exec(note);
-			this._bigSprite.size = Number(params[1]);
-			this._bigSprite.front = Number(params[2]);
-			this._bigSprite.back = Number(params[3]);
-			this._bigSprite.left = Number(params[4]);
-			this._bigSprite.right = Number(params[5]);
-			this._bigSprite.type = 'squareB';
-			return;
-		}
-		if (note.match(/\d+ diamond \d+/i)) {
-			var params = capturingRegex2.exec(note);
-			this._bigSprite.size = Number(params[1]);
-			this._bigSprite.radius = Number(params[2]);
-			this._bigSprite.type = 'diamondB';
-			return;
-		}
-		if (note.match(/\d+ circle \d+/i)) {
-			var params = capturingRegex3.exec(note);
-			this._bigSprite.size = Number(params[1]);
-			this._bigSprite.radius = Number(params[2]);
-			this._bigSprite.type = 'circleB';
-			return;
-		}
-		if (note.match(/\[.*\]/)) {
-			var params = capturingRegexC.exec(note);
-			this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-			this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-			this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-			this._bigSprite.type = 'custom';
-			return;
-		}
-		if (note.match(/\d+ \d+ \d+/)) {
-			var params = capturingRegexA.exec(note);
-			this._bigSprite.back = Number(params[1]);
-			this._bigSprite.left = Number(params[2]);
-			this._bigSprite.right = Number(params[3]);
-			this._bigSprite.type = 'squareA';
-			return;
-		}		
+		this.bigSpriteRegexProcessing(note);
 	};
 	
 	Game_Event.prototype.setSpriteExSizeFromEventNote = function() {
 		if (this.isSpawnEvent) return;
 		var note = $dataMap.events[this._eventId].meta.bigSpriteEx;
 		if (!note) return;
-		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
-		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
-		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
-		if (note.match(/\[.*\]/)) {
-			var params = capturingRegexC.exec(note);
-			var coord = {'down': [], 'left': [], 'right': [], 'up': []};
-			if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(note);
-					if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(note);
-					if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(note);
-					if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-				do {
-					var match = capturingRegexC2.exec(note);
-					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-				} while (match);
-			}
-			this._bigSprite.exCoord = coord;
-			this._bigSprite.exType = 'C';
-		}
-		if (note.match(/(\d+|-\d+),(\d+|-\d+)/)) {
-			var coord = [];
-			do {
-				var match = capturingRegexA.exec(note);
-				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-			} while (match);
-			this._bigSprite.exCoord = coord;
-			if (this._bigSprite.type === 'squareA') this._bigSprite.exType = 'A';
-			else this._bigSprite.exType = 'B';
-		}
+		this.bigSpriteExRegexProcessing(note);
 	};
 	
 	Game_Vehicle.prototype.setBigVehicleSize = function(type) {
@@ -368,21 +342,7 @@
 	
 	Game_Character.prototype.setBigVehicleVariables = function(args) {
 		this.initializeBigSprite();
-		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/i
-		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/i	
-		if (args.match(/\[.*\]/)) {
-			var params = capturingRegexC.exec(args);
-			this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-			this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-			this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-			this._bigSprite.type = 'custom';
-		} else if (args.match(/\d+ \d+ \d+/)) {
-			var params = capturingRegexA.exec(args);
-			this._bigSprite.back = Number(params[1]);
-			this._bigSprite.left = Number(params[2]);
-			this._bigSprite.right = Number(params[3]);
-			this._bigSprite.type = 'squareA';
-		}
+		this.bigSpriteRegexProcessing(args);
 	};
 	
 	var _Game_Interpreter_command108 = Game_Interpreter.prototype.command108;
@@ -408,42 +368,7 @@
 	
 	Game_Event.prototype.executeBigSpriteComment = function(comment, target) {
 		target.initializeBigSprite();
-		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/i
-		var capturingRegex = /(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)/i;
-		var capturingRegex2 = /(\d+)(?: )(?:diamond )(\d+)/i;
-		var capturingRegex3 = /(\d+)(?: )(?:circle )(\d+)/i;
-		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/i	
-		if (comment.match(/\d+ \d+ \d+ \d+ \d+/i)) {
-			var params = capturingRegex.exec(comment);
-			target._bigSprite.size = Number(params[1]);
-			target._bigSprite.front = Number(params[2]);
-			target._bigSprite.back = Number(params[3]);
-			target._bigSprite.left = Number(params[4]);
-			target._bigSprite.right = Number(params[5]);
-			target._bigSprite.type = 'squareB';
-		} else if (comment.match(/\d+ diamond \d+/i)) {
-			var params = capturingRegex2.exec(comment);
-			target._bigSprite.size = Number(params[1]);
-			target._bigSprite.radius = Number(params[2]);
-			target._bigSprite.type = 'diamondB';
-		} else if (comment.match(/\d+ circle \d+/i)) {
-			var params = capturingRegex3.exec(comment);
-			target._bigSprite.size = Number(params[1]);
-			target._bigSprite.radius = Number(params[2]);
-			target._bigSprite.type = 'circleB';
-		} else if (comment.match(/\[.*\]/)) {
-			var params = capturingRegexC.exec(comment);
-			target._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-			target._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-			target._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-			target._bigSprite.type = 'custom';
-		} else if (comment.match(/\d+ \d+ \d+/)) {
-			var params = capturingRegexA.exec(comment);
-			target._bigSprite.back = Number(params[1]);
-			target._bigSprite.left = Number(params[2]);
-			target._bigSprite.right = Number(params[3]);
-			target._bigSprite.type = 'squareA';
-		}		
+		target.bigSpriteRegexProcessing(comment);
 		target.setEventCoordinates();
 		target.updateEventCoordinates();
 	};
@@ -451,6 +376,64 @@
 	Game_Event.prototype.executeBigSpriteExComment = function(comment, target) {
 		target._bigSprite.exCoord = null;
 		target._bigSprite.exType = null;
+		target.bigSpriteRegexExProcessing(comment);
+		target.setEventCoordinates();
+		target.updateEventCoordinates();
+	};
+	
+	Game_Event.prototype.setSpriteSizeFromPageComment = function() {		
+		var pagelist = this.list();
+		for (var i = 0; i < pagelist.length; i++) {
+			if ((pagelist[i].code === 108 || pagelist[i].code === 408)) {
+				var params = pagelist[i].parameters;
+				for (var j = 0; j < params.length; j++) {				
+					if (params[j].match(/bigSprite:/i)) this.bigSpriteRegexProcessing(params[j]);
+					else if (params[j].match(/bigSpriteEx:/i)) this.bigSpriteRegexExProcessing(params[j]);
+				}
+			}
+		}
+	};
+	
+	Game_Character.prototype.bigSpriteRegexProcessing = function(comment) {
+		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/;
+		var capturingRegex = /(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)/;
+		var capturingRegex2 = /(\d+)(?: )(?:diamond )(\d+)/i;
+		var capturingRegex3 = /(\d+)(?: )(?:circle )(\d+)/i;
+		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/;
+		if (comment.match(/\d+ \d+ \d+ \d+ \d+/)) {
+			var params = capturingRegex.exec(comment);
+			this._bigSprite.size = Number(params[1]);
+			this._bigSprite.front = Number(params[2]);
+			this._bigSprite.back = Number(params[3]);
+			this._bigSprite.left = Number(params[4]);
+			this._bigSprite.right = Number(params[5]);
+			this._bigSprite.type = 'squareB';
+		} else if (comment.match(/\d+ diamond \d+/i)) {
+			var params = capturingRegex2.exec(comment);
+			this._bigSprite.size = Number(params[1]);
+			this._bigSprite.radius = Number(params[2]);
+			this._bigSprite.type = 'diamondB';
+		} else if (comment.match(/\d+ circle \d+/i)) {
+			var params = capturingRegex3.exec(comment);
+			this._bigSprite.size = Number(params[1]);
+			this._bigSprite.radius = Number(params[2]);
+			this._bigSprite.type = 'circleB';
+		} else if (comment.match(/\[.*\]/)) {
+			var params = capturingRegexC.exec(comment);
+			this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
+			this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
+			this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
+			this._bigSprite.type = 'custom';
+		} else if (comment.match(/\d+ \d+ \d+/)) {
+			var params = capturingRegexA.exec(comment);
+			this._bigSprite.back = Number(params[1]);
+			this._bigSprite.left = Number(params[2]);
+			this._bigSprite.right = Number(params[3]);
+			this._bigSprite.type = 'squareA';
+		}		
+	};
+	
+	Game_Character.prototype.bigSpriteExRegexProcessing = function(comment) {
 		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
 		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
 		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
@@ -481,8 +464,8 @@
 					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
 				} while (match);
 			}
-			target._bigSprite.exCoord = coord;
-			target._bigSprite.exType = 'C';
+			this._bigSprite.exCoord = coord;
+			this._bigSprite.exType = 'C';
 		}
 		if (comment.match(/(\d+|-\d+),(\d+|-\d+)/)) {
 			var coord = [];
@@ -490,109 +473,11 @@
 				var match = capturingRegexA.exec(comment);
 				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
 			} while (match);
-			target._bigSprite.exCoord = coord;
-			if (target._bigSprite.type === 'squareA') target._bigSprite.exType = 'A';
-			else target._bigSprite.exType = 'B';
+			this._bigSprite.exCoord = coord;
+			if (this._bigSprite.type === 'squareA') this._bigSprite.exType = 'A';
+			else this._bigSprite.exType = 'B';
 		}
-		target.setEventCoordinates();
-		target.updateEventCoordinates();
-	};
-	
-	Game_Event.prototype.setSpriteSizeFromPageComment = function() {		
-		var pagelist = this.list();
-		var capturingRegexA = /(\d+)(?: )(\d+)(?: )(\d+)/i
-		var capturingRegex = /(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)(?: )(\d+)/i;
-		var capturingRegex2 = /(\d+)(?: )(?:diamond )(\d+)/i;
-		var capturingRegex3 = /(\d+)(?: )(?:circle )(\d+)/i;
-		var capturingRegexC = /(?:\[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])(?: \[)(\d+)(?: )(\d+)(?: )(\d+)(?:\])/i	
-		
-		var capturingRegexA2 = /(\d+|-\d+),(\d+|-\d+)/g
-		var capturingRegexC2 = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
-		var capturingRegexC3 = /(\d+|-\d+),(\d+|-\d+)/g
-		
-		for (var i = 0; i < pagelist.length; i++) {
-			var parameters = pagelist[i].parameters;
-			for (var j = 0; j < parameters.length; j++) {
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+ \d+ \d+>/i)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegex.exec(comment);
-					this._bigSprite.size = Number(params[1]);
-					this._bigSprite.front = Number(params[2]);
-					this._bigSprite.back = Number(params[3]);
-					this._bigSprite.left = Number(params[4]);
-					this._bigSprite.right = Number(params[5]);
-					this._bigSprite.type = 'squareB';					
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ diamond \d+>/i)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegex2.exec(comment);
-					this._bigSprite.size = Number(params[1]);
-					this._bigSprite.radius = Number(params[2]);
-					this._bigSprite.type = 'diamondB';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ circle \d+>/i)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegex3.exec(comment);
-					this._bigSprite.size = Number(params[1]);
-					this._bigSprite.radius = Number(params[2]);
-					this._bigSprite.type = 'circleB';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \[.*\]/)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegexC.exec(comment);
-					this._bigSprite.back = [Number(params[1]), Number(params[4]), Number(params[7]), Number(params[10])];
-					this._bigSprite.left = [Number(params[2]), Number(params[5]), Number(params[8]), Number(params[11])];
-					this._bigSprite.right = [Number(params[3]), Number(params[6]), Number(params[9]), Number(params[12])];
-					this._bigSprite.type = 'custom';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEvent: \d+ \d+ \d+/)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegexA.exec(comment);
-					this._bigSprite.back = Number(params[1]);
-					this._bigSprite.left = Number(params[2]);
-					this._bigSprite.right = Number(params[3]);
-					this._bigSprite.type = 'squareA';
-				}	
-				if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: \[.*\]/)) {
-					var comment = pagelist[i].parameters;
-					var params = capturingRegexC2.exec(comment);
-					var coord = {'down': [], 'left': [], 'right': [], 'up': []};
-					if (params[1].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.down.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					if (params[2].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.left.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					if (params[3].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.right.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					if (params[4].match(/(\d+|-\d+),(\d+|-\d+)/)) {
-						do {
-							var match = capturingRegexC3.exec(comment);
-							if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-						} while (match);
-					}
-					this._bigSprite.exCoord = coord;
-					this._bigSprite.exType = 'C';
-				} else if ((pagelist[i].code === 108 || pagelist[i].code === 408) && parameters[j].match(/<bigEventEx: (\d+|-\d+),(\d+|-\d+)/)) {
-					var comment = pagelist[i].parameters;
-					var coord = [];
-					do {
-						var match = capturingRegexA.exec(comment);
-						if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
-					} while (match);
-					this._bigSprite.exCoord = coord;
-					if (this._bigSprite.type === 'squareA') this._bigSprite.exType = 'A';
-					else this._bigSprite.exType = 'B';
-				}
-			}
-		}
-	};
+	};	
 
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -796,12 +681,18 @@
 	
 	Game_CharacterBase.prototype.checkDiagonalTiles = function(horz, vert) {
 		var thisCoord = this._bigSprite.occupancy;
-		var forwardTiles = [];
+		if (diagBlock) {
+			var forwardTiles = this.checkAheadTiles(horz).concat(this.checkAheadTiles(vert));
+		} else {
+			var forwardTiles = [];
+		}
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, horz);
 			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, vert);
-			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY})) forwardTiles.push({'x': tempX,'y': tempY});
-		}
+			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY}) && !forwardTiles.some(function(xy) {return xy.x === tempX && xy.y === tempY})) {
+				forwardTiles.push({'x': tempX,'y': tempY});
+			}
+		} console.log(diagBlock); console.log(forwardTiles);
 		return forwardTiles;
 	};
 
@@ -815,6 +706,12 @@
 		this.setThrough(true);
 		this.setDirection(d);
 		this.moveForward();
+		this.setThrough(false);
+	};
+	
+	Game_Player.prototype.forceTurnDirection = function(d) {
+		this.setThrough(true);
+		this.setDirection(d);
 		this.setThrough(false);
 	};
 	
@@ -836,7 +733,11 @@
 				}
 			}
 			if (this._vehicleType !== 'airship') {
-				var ahead = this.checkAheadTiles(d);
+				if (Pl_ADT) {
+					var ahead = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
+				} else {
+					var ahead = this.checkAheadTiles(d);
+				}
 				for (var i = 0; i < ahead.length; i++) {
 					if ($gameMap.ship().pos(ahead[i].x, ahead[i].y)) {
 						this._vehicleType = 'ship';
@@ -862,18 +763,21 @@
 	var _Game_Vehicle_getOn = Game_Vehicle.prototype.getOn;
 	Game_Vehicle.prototype.getOn = function() {
 		$gameSystem._bigSprite = $gamePlayer._bigSprite;
+		$gamePlayer.initializeBigSprite();
 		var x = this.x;
 		var y = this.y;
-		this.setThrough(true);
 		while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
 		while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
 		while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
 		while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
-		this.setThrough(false);
 		_Game_Vehicle_getOn.call(this); 
 		this.setBigVehicleSize.call($gamePlayer, this._type);
 		this.initializeBigSprite();
+		$gamePlayer.setEventCoordinates();
+		$gamePlayer.updateEventCoordinates();
 	};
+	
+	var getOffCoord = null;
 	
 	var _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
 	Game_Vehicle.prototype.isLandOk = function(x, y, d) {
@@ -885,15 +789,81 @@
 				if ($gameMap.eventsXy(x, y).length > 0) {
 					return false;
 				}
-			} else {
+			} else {				
+				if (sideUnload) {
+					if (RHD) {
+						if (d === 2) {var d1 = 6; var d2 = 4;}
+						if (d === 8) {var d1 = 4; var d2 = 6;}
+						if (d === 4) {var d1 = 2; var d2 = 8;}
+						if (d === 6) {var d1 = 8; var d2 = 2;}
+					} else {
+						if (d === 2) {var d1 = 4; var d2 = 6;}
+						if (d === 8) {var d1 = 6; var d2 = 4;}
+						if (d === 4) {var d1 = 8; var d2 = 2;}
+						if (d === 6) {var d1 = 2; var d2 = 8;}
+					}
+					var side1Tiles = this.checkAheadTiles.call($gamePlayer, d1);
+					var options = [];
+					for (var i = 0; i < side1Tiles.length; i++) {
+						if ($gameMap.isValid(side1Tiles[i].x, side1Tiles[i].y) && $gameMap.isPassable(side1Tiles[i].x, side1Tiles[i].y, this.reverseDir(d1)) && !this.isCollidedWithCharacters(side1Tiles[i].x, side1Tiles[i].y)) {
+							var plusX = 0;
+							var plusY = 0;
+							if (d1 === 2) plusY = -1;
+							if (d1 === 6) plusX = -1;
+							if (d1 === 8) plusY = 1;
+							if (d1 === 4) plusX = 1;
+							options.push({'x': side1Tiles[i].x + plusX, 'y': side1Tiles[i].y + plusY, 'd': d1});
+						}
+					}
+					if (options.length > 0) {
+						if (options.length % 2 === 0) {
+							if (d === 2) var middleOption = options.length/2 - 1;
+							else var middleOption = options.length/2;
+						} else {
+							var middleOption = Math.floor(options.length/2);
+						}
+						getOffCoord = options[middleOption];
+						return true;
+					}
+					var side2Tiles = this.checkAheadTiles.call($gamePlayer, d2);
+					for (var i = 0; i < side2Tiles.length; i++) {
+						if ($gameMap.isValid(side2Tiles[i].x, side2Tiles[i].y) && $gameMap.isPassable(side2Tiles[i].x, side2Tiles[i].y, this.reverseDir(d2)) && !this.isCollidedWithCharacters(side2Tiles[i].x, side2Tiles[i].y)) {
+							var plusX = 0;
+							var plusY = 0;
+							if (d2 === 2) plusY = -1;
+							if (d2 === 6) plusX = -1;
+							if (d2 === 8) plusY = 1;
+							if (d2 === 4) plusX = 1;
+							options.push({'x': side2Tiles[i].x + plusX, 'y': side2Tiles[i].y + plusY, 'd': d2});
+						}
+					}
+					if (options.length > 0) {
+						if (options.length % 2 === 0) {
+							if (d === 2) var middleOption = options.length/2 - 1;
+							else var middleOption = options.length/2;
+						} else {
+							var middleOption = Math.floor(options.length/2);
+						}
+						getOffCoord = options[middleOption];
+						return true;
+					}
+					return false;
+				}
 				var forwardTiles = this.checkAheadTiles.call($gamePlayer, d);
 				for (var i = 0; i < forwardTiles.length; i++) {
-					if (!$gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y)) return false;
-					if (!$gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, this.reverseDir(d))) return false;
-					if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) return false;
+					if ($gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y) && $gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, this.reverseDir(d)) && !this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) {
+						var plusX = 0;
+						var plusY = 0;
+						if (this._direction === 2) plusY = -1;
+						if (this._direction === 6) plusX = -1;
+						if (this._direction === 8) plusY = 1;
+						if (this._direction === 4) plusX = 1;
+						getOffCoord = {'x': forwardTiles[i].x + plusX, 'y': forwardTiles[i].y + plusY, 'd': this._direction};
+						return true;
+					}
 				}
-			}
-			return true;
+				return false;
+			}			
 		}
 		return _Game_Vehicle_isLandOk.call(this, x, y, d);		
 	};
@@ -915,23 +885,26 @@
 	var _Game_Vehicle_getOff = Game_Vehicle.prototype.getOff;
 	Game_Vehicle.prototype.getOff = function() {
 		var dir = this._direction;
+		$gamePlayer.initializeBigSprite();
+		if (getOffCoord) {
+			var x = getOffCoord.x;
+			var y = getOffCoord.y;
+			while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
+			while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
+			while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
+			while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+			$gamePlayer.setDirection(getOffCoord.d);
+		}		
 		_Game_Vehicle_getOff.call(this);
 		this.setDirection(dir);
-		$gamePlayer.initializeBigSprite();
+		getOffCoord = null;
 		$gamePlayer._bigSprite = $gameSystem._bigSprite;
 		$gameSystem.setupBigPlayerSettings();
 		this.setBigVehicleSize(this._type);
 		this.setEventCoordinates();
 		this.updateEventCoordinates();
-	};
-	
-	var _Game_Player_getOffVehicle = Game_Player.prototype.getOffVehicle;
-	Game_Player.prototype.getOffVehicle = function() {
-		var normal = _Game_Player_getOffVehicle.call(this);
-		while (!$gameMap.isPassable(this.x, this._bigSprite.Y0, this._direction)) {
-			this.forceMoveForward();
-		}
-		return normal;
+		$gamePlayer.setEventCoordinates();
+		$gamePlayer.updateEventCoordinates();
 	};
 	
 /* 
@@ -943,14 +916,19 @@
 	var _Game_CharacterBase_checkEventTriggerTouchFront = Game_CharacterBase.prototype.checkEventTriggerTouchFront;
 	Game_CharacterBase.prototype.checkEventTriggerTouchFront = function(d) {
 		if (this._bigSprite.type) {
-			var forwardTiles = this.checkAheadTiles(d);
-			if (forwardTiles) {
+			if (Ev_ADT) {
+				var surroundTiles = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
+				for (var i = 0; i < surroundTiles.length; i++) {
+					this.checkEventTriggerTouch(surroundTiles[i].x, surroundTiles[i].y);
+				}
+			} else {
+				var forwardTiles = this.checkAheadTiles(d);
 				for (var i = 0; i < forwardTiles.length; i++) {
 					this.checkEventTriggerTouch(forwardTiles[i].x, forwardTiles[i].y);
 				}
-			}			
+			}
 		} else {
-			_Game_CharacterBase_checkEventTriggerTouchFront.call(this, d);		
+			_Game_CharacterBase_checkEventTriggerTouchFront.call(this, d);
 		}
 	};
 	
@@ -968,12 +946,35 @@
 	var _Game_Player_checkEventTriggerThere = Game_Player.prototype.checkEventTriggerThere;
 	Game_Player.prototype.checkEventTriggerThere = function(triggers) {
 		if (this.canStartLocalEvents() && this._bigSprite.type) {
-			var d = this.direction();
-			var forwardTiles = this.checkAheadTiles(d);
-			for (var i = 0; i < forwardTiles.length; i++) {
-				this.startMapEvent(forwardTiles[i].x, forwardTiles[i].y, triggers, true);
-			}			
+			if (Pl_ADT) {
+				var surroundTiles = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
+				for (var i = 0; i < surroundTiles.length; i++) {
+					if (!$gameMap.isAnyEventStarting()) this.startMapEvent(surroundTiles[i].x, surroundTiles[i].y, triggers, true);
+				}
+			} else {
+				var d = this.direction();
+				var forwardTiles = this.checkAheadTiles(d);
+				for (var i = 0; i < forwardTiles.length; i++) {
+					if (!$gameMap.isAnyEventStarting()) this.startMapEvent(forwardTiles[i].x, forwardTiles[i].y, triggers, true);
+				}
+			}
 		} else _Game_Player_checkEventTriggerThere.call(this, triggers);
+	};
+	
+	var _Game_Player_triggerTouchAction = Game_Player.prototype.triggerTouchAction;
+	Game_Player.prototype.triggerTouchAction = function() {
+		if (this._bigSprite.type && $gameTemp.isDestinationValid()){
+			var direction = this.direction();
+			var here = this._bigSprite.occupancy;
+			for (var i = 0; i < here.length; i++) {
+				if (this.triggerTouchActionD1(here[i].x, here[i].y)) return true;
+			}
+			var ahead = this.checkAheadTiles(direction);
+			for (var i = 0; i < ahead.length; i++) {
+				if (this.triggerTouchActionD2(ahead[i].x, ahead[i].y)) return true;
+			}
+		}
+		return _Game_Player_triggerTouchAction.call(this);
 	};
 	
 /* 
@@ -1027,7 +1028,7 @@
 		if (this._bigSprite.type) {
 			if (this.isThrough() || this.isDebugThrough()) return true;
 			if (this === $gamePlayer && this.isInAirship())return true;
-			var tilesToCheck = this.checkDiagonalTiles(horz, vert);
+			var tilesToCheck = this.checkDiagonalTiles(horz, vert); if(this === $gamePlayer){console.log(tilesToCheck)};
 			for (var i = 0; i < tilesToCheck.length; i++) {
 				if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) return false;	
 				if (this === $gamePlayer && this.isInBoat()) {
@@ -1041,6 +1042,31 @@
 		}
 		return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);		
 	};	
+	
+	if (diagMovement) {
+		var _Game_Player_canPassDiagonally = Game_Player.prototype.canPassDiagonally;
+		Game_Player.prototype.canPassDiagonally = function(x, y, horz, vert) {
+			if (this._bigSprite.type) {
+				if (this.isThrough() || this.isDebugThrough()) return true;
+				if (this === $gamePlayer && this.isInAirship())return true;
+				var tilesToCheck = this.checkDiagonalTiles(horz, vert);
+				for (var i = 0; i < tilesToCheck.length; i++) {
+					if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) return false;	
+					if (this === $gamePlayer && this.isInBoat()) {
+						if (!$gameMap.isBoatPassable(tilesToCheck[i].x, tilesToCheck[i].y)) return false;					
+					} else if (this === $gamePlayer && this.isInShip()) {
+						if (!$gameMap.isShipPassable(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
+					} else if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz) || !$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) return false;				
+					if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
+				} 
+				return true;
+			} else if (_Game_Player_canPassDiagonally) {
+				return _Game_Player_canPassDiagonally.call(this, x, y, horz, vert);
+			} else {
+				return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);
+			}			
+		};
+	}
 	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1130,6 +1156,7 @@
 					this.setEventCoordinates();
 					this.updateEventCoordinates();
 					this.increaseSteps();
+					this.checkEventTriggerTouchFront(d);
 				} else {
 					this.setEventCoordinates();
 					this.updateEventCoordinates();
@@ -1144,6 +1171,7 @@
 			_Game_Character_moveStraight.call(this, d);
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
+			this.checkEventTriggerTouchFront(d);
 		}
 	};
 	
@@ -1158,7 +1186,8 @@
 				this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(vert));
 				this.setEventCoordinates();
 				this.updateEventCoordinates();
-				this.increaseSteps();			
+				this.increaseSteps();
+				this.checkEventTriggerTouchFront(this._direction);				
 			} else {
 				this.updateEventCoordinates();
 				this.checkEventTriggerTouchFront(this._direction);
@@ -1166,15 +1195,18 @@
 			if (this._direction === this.reverseDir(horz)) {
 				this.setDirection(horz);
 				this.updateEventCoordinates();
+				this.checkEventTriggerTouchFront(this._direction);
 			}
 			if (this._direction === this.reverseDir(vert)) {
 				this.setDirection(vert);
 				this.updateEventCoordinates();
+				this.checkEventTriggerTouchFront(this._direction);
 			}		
 		} else {
 			_Game_Character_moveDiagonally.call(this, horz, vert);
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
+			this.checkEventTriggerTouchFront(this._direction);
 		}
 	};
 	
@@ -1208,6 +1240,7 @@
 						this._bigSprite.occupancy = oldCoord;
 						this.resetStopCount();
 						this.straighten();
+						this.checkEventTriggerTouchFront(this._direction);
 						return;
 					}
 					if (this === $gamePlayer && this.isInBoat()) {
@@ -1217,6 +1250,7 @@
 							this._bigSprite.occupancy = oldCoord;
 							this.resetStopCount();
 							this.straighten();
+							this.checkEventTriggerTouchFront(this._direction);
 							return;
 						}
 					} else if (this === $gamePlayer && this.isInShip()) {
@@ -1226,6 +1260,7 @@
 							this._bigSprite.occupancy = oldCoord;
 							this.resetStopCount();
 							this.straighten();
+							this.checkEventTriggerTouchFront(this._direction);
 							return;
 						}
 					} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, d)) {
@@ -1234,6 +1269,7 @@
 						this._bigSprite.occupancy = oldCoord;
 						this.resetStopCount();
 						this.straighten();
+						this.checkEventTriggerTouchFront(this._direction);
 						return;
 					}
 				}
@@ -1243,11 +1279,13 @@
 				this.updateEventCoordinates();
 				this.resetStopCount();
 				this.straighten();
+				this.checkEventTriggerTouchFront(this._direction);
 			}
 		} else {
 			_Game_Character_jump.call(this, xPlus, yPlus);
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
+			this.checkEventTriggerTouchFront(this._direction);
 		}
 	};
 	
@@ -1271,111 +1309,78 @@
 	
 	var _Game_Character_swap = Game_Character.prototype.swap;
 	Game_Character.prototype.swap = function(character) {
-		if (this._bigSprite.type) {
-			var newX = character.x;
-			var newY = character.y + Math.floor(this._bigSprite.size / 2);
-			var oldCoord = this._bigSprite.occupancy;
-			var oldX = this.x;
-			var oldY = this.y;
-			var oldcharX = character.x;
-			var oldcharY = character.y;
-			character.locate(this.x, this._bigSprite.Y0);
-			this.locate(newX, newY);
-			this.resetStopCount();
-			this.straighten();
-			var newCoord = this._bigSprite.occupancy;
-			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
-					character.locate(oldcharX, oldcharY);
-					this.locate(oldX, oldY);
-					this._bigSprite.occupancy = oldCoord;
-					this.resetStopCount();
-					this.straighten();
-					return;
+		if (this._bigSprite.type || character._bigSprite.type) {
+			var oneNewX = character.x;
+			var oneNewY = character.y + Math.floor(this._bigSprite.size / 2);
+			var twoNewX = this.x;
+			var twoNewY = this.y + Math.floor(character._bigSprite.size / 2);
+			var oneOldX = this.x;
+			var oneOldY = this.y;
+			var twoOldX = character.x;
+			var twoOldY = character.y;
+			character.locate(twoNewX, twoNewY);
+			this.locate(oneNewX, oneNewY);
+			var oneNewCoord = this._bigSprite.occupancy;
+			var twoNewCoord = character._bigSprite.occupancy;
+			var success = true;
+			for (var i = 0; i < oneNewCoord.length; i++) {
+				if (!$gameMap.isValid(oneNewCoord[i].x, oneNewCoord[i].y) || this.isCollidedWithCharacters(oneNewCoord[i].x, oneNewCoord[i].y)) {
+					character.locate(twoOldX, twoOldY);
+					this.locate(oneOldX, oneOldY);
+					success = false;
+					break;
 				}
 				if (this === $gamePlayer && this.isInBoat()) {
-					if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
-						character.locate(oldcharX, oldcharY);
-						this.locate(oldX, oldY);
-						this._bigSprite.occupancy = oldCoord;
-						this.resetStopCount();
-						this.straighten();
-						return;
+					if (!$gameMap.isBoatPassable(oneNewCoord[i].x, oneNewCoord[i].y)) {
+						character.locate(twoOldX, twoOldY);
+						this.locate(oneOldX, oneOldY);
+						success = false;
+						break;
 					}
 				} else if (this === $gamePlayer && this.isInShip()) {
-					if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
-						character.locate(oldcharX, oldcharY);
-						this.locate(oldX, oldY);
-						this._bigSprite.occupancy = oldCoord;
-						this.resetStopCount();
-						this.straighten();
-						return;
+					if (!$gameMap.isShipPassable(oneNewCoord[i].x, oneNewCoord[i].y)) {
+						character.locate(twoOldX, twoOldY);
+						this.locate(oneOldX, oneOldY);
+						success = false;
+						break;
 					}
-				} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, this._direction)) {
-					character.locate(oldcharX, oldcharY);
-					this.locate(oldX, oldY);
-					this._bigSprite.occupancy = oldCoord;
-					this.resetStopCount();
-					this.straighten();
-					return;
+				} else if (!$gameMap.isPassable(oneNewCoord[i].x, oneNewCoord[i].y, this._direction)) {
+					character.locate(twoOldX, twoOldY);
+					this.locate(oneOldX, oneOldY);
+					success = false;
+					break;
 				}
 			}
-			this.updateEventCoordinates();
-		} else if (character._bigSprite.type) {
-			var newX = character.x;
-			var newY = character._bigSprite.Y0;
-			var oldX = this.x;
-			var oldY = this.y;
-			var oldcharX = character.x;
-			var oldcharY = character.y;
-			var oldCoord = character._bigSprite.occupancy;			
-			character.locate(this.x, this.y + Math.floor(character._bigSprite.size / 2));
-			this.locate(newX, newY);			
-			this.resetStopCount();
-			this.straighten();
-			var newCoord = character._bigSprite.occupancy;
-			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || character.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
-					character.locate(oldcharX, oldcharY);
-					this.locate(oldX, oldY);
-					character._bigSprite.occupancy = oldCoord;
-					this.resetStopCount();
-					this.straighten();
-					return;
-				}
-				if (character === $gamePlayer && character.isInBoat()) {
-					if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
-						character.locate(oldcharX, oldcharY);
-						this.locate(oldX, oldY);
-						character._bigSprite.occupancy = oldCoord;
-						this.resetStopCount();
-						this.straighten();
-						return;
+			if (success) {
+				for (var i = 0; i < twoNewCoord.length; i++) {
+					if (!$gameMap.isValid(twoNewCoord[i].x, twoNewCoord[i].y) || character.isCollidedWithCharacters(twoNewCoord[i].x, twoNewCoord[i].y)) {
+						character.locate(twoOldX, twoOldY);
+						this.locate(oneOldX, oneOldY);
+						break;
 					}
-				} else if (character === $gamePlayer && character.isInShip()) {
-					if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
-						character.locate(oldcharX, oldcharY);
-						this.locate(oldX, oldY);
-						character._bigSprite.occupancy = oldCoord;
-						this.resetStopCount();
-						this.straighten();
-						return;
+					if (character === $gamePlayer && character.isInBoat()) {
+						if (!$gameMap.isBoatPassable(twoNewCoord[i].x, twoNewCoord[i].y)) {
+							character.locate(twoOldX, twoOldY);
+							this.locate(oneOldX, oneOldY);
+							break;
+						}
+					} else if (character === $gamePlayer && character.isInShip()) {
+						if (!$gameMap.isShipPassable(twoNewCoord[i].x, twoNewCoord[i].y)) {
+							character.locate(twoOldX, twoOldY);
+							this.locate(oneOldX, oneOldY);
+							break;
+						}
+					} else if (!$gameMap.isPassable(twoNewCoord[i].x, twoNewCoord[i].y, character._direction)) {
+						character.locate(twoOldX, twoOldY);
+						this.locate(oneOldX, oneOldY);
+						break;
 					}
-				} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, character._direction)) {
-					character.locate(oldcharX, oldcharY);
-					this.locate(oldX, oldY);
-					character._bigSprite.occupancy = oldCoord;
-					this.resetStopCount();
-					this.straighten();
-					return;
 				}
+				this.resetStopCount();
+				this.straighten();
 			}
-			this.setEventCoordinates();
-			this.updateEventCoordinates();
 		} else {
 			_Game_Character_swap.call(this, character);
-			this.setEventCoordinates();
-			this.updateEventCoordinates();
 		}
 	};
 	
@@ -1385,12 +1390,17 @@
 		if (this._bigSprite.occupancy) {
 			this.setEventCoordinates();
 			this.updateEventCoordinates();
+			this.checkEventTriggerTouchFront(this._direction);
 		}
 	};
 	
-	var _Game_Character_findDirectionTo = Game_Character.prototype.findDirectionTo;
-	Game_Character.prototype.findDirectionTo = function(goalX, goalY) {
-		if (this._bigSprite.type && this._bigSprite.type.includes('B')) {
+	if (touchFixB) {
+		Game_Character.prototype.findDirectionTo = function(goalX, goalY) {
+			if (this._bigSprite.type && this._bigSprite.type.match(/B/)) {
+				var centerY = this._bigSprite.Y0;
+			} else {
+				var centerY = this._y;
+			}
 			var searchLimit = this.searchLimit();
 			var mapWidth = $gameMap.width();
 			var nodeList = [];
@@ -1398,14 +1408,14 @@
 			var closedList = [];
 			var start = {};
 			var best = start;
-
-			if (this.x === goalX && this._bigSprite.Y0 === goalY) {
+			
+			if (this.x === goalX && centerY === goalY) {
 				return 0;
 			}
 
 			start.parent = null;
 			start.x = this.x;
-			start.y = this._bigSprite.Y0;
+			start.y = centerY;
 			start.g = 0;
 			start.f = $gameMap.distance(start.x, start.y, goalX, goalY);
 			nodeList.push(start);
@@ -1501,9 +1511,7 @@
 			}
 
 			return 0;
-		} else {
-			_Game_Character_findDirectionTo.call(this, goalX, goalY);
-		}
+		};
 	};
 	
 })();
