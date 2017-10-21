@@ -36,7 +36,7 @@
  * @default true
  * 
  * @param Right Hand Drive
- * @desc Because getting of the side of the vehicle is left hand drive by default.
+ * @desc Because getting off the side of the vehicle is left hand drive by default.
  * @default false
  * 
  * @param Touch Fix B
