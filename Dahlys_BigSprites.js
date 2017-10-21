@@ -673,7 +673,7 @@
 			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY}) && !forwardTiles.some(function(xy) {return xy.x === tempX && xy.y === tempY})) {
 				forwardTiles.push({'x': tempX,'y': tempY});
 			}
-		} console.log(diagBlock); console.log(forwardTiles);
+		}
 		return forwardTiles;
 	};
 
@@ -961,6 +961,37 @@
 -------------------------------------------------------------------------------------------------------------------------------------------
 */	
 	
+	var _Game_CharacterBase_isMapPassable = Game_CharacterBase.prototype.isMapPassable;
+	Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
+		if (this._bigSprite.type) {
+			if (!$gameMap.isPassable(x, y, d)) return false;
+			var ahead = this.checkAheadTiles(d);
+			var d2 = this.reverseDir(d);
+			for (var i = 0; i < ahead.length; i++) {
+				if (!$gameMap.isPassable(ahead[i].x, ahead[i].y, d2)) {
+					return false;
+				}
+			}
+			return true;
+		} else return _Game_CharacterBase_isMapPassable.call(this, x, y, d);
+	};
+	
+	var _Game_Vehicle_isMapPassable = Game_Vehicle.prototype.isMapPassable;
+	Game_Vehicle.prototype.isMapPassable = function(x, y, d) {
+		if ($gamePlayer._bigSprite.type) {
+			if (this.isAirship()) return true;
+			var ahead = $gamePlayer.checkAheadTiles(d);
+			for (var i = 0; i < ahead.length; i++) {
+				if (this.isBoat() && !$gameMap.isBoatPassable(ahead[i].x, ahead[i].y)) {
+					return false;
+				} else if (this.isShip() && !$gameMap.isShipPassable(ahead[i].x, ahead[i].y)) {
+					return false;				
+				}
+			}
+			return true;
+		} else return _Game_Vehicle_isMapPassable.call(this, x, y, d);
+	};
+	
 	Game_CharacterBase.prototype.isCollidedWithEvents = function(x, y) {
 		if (!this.isNormalPriority()) return false;
 		var events = $gameMap.eventsXyNt(x, y).filter(function(ev) {return ev.isNormalPriority();});
@@ -989,11 +1020,7 @@
 			var forwardTiles = this.checkAheadTiles(d); 
 			for (var i = 0; i < forwardTiles.length; i++) {
 				if (!$gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y)) return false;
-				if (this === $gamePlayer && this.isInBoat()) {
-					if (!$gameMap.isBoatPassable(forwardTiles[i].x, forwardTiles[i].y)) return false;
-				} else if (this === $gamePlayer && this.isInShip()) {
-					if (!$gameMap.isShipPassable(forwardTiles[i].x, forwardTiles[i].y)) return false;
-				} else if (!$gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, d)) return false;
+				if (!this.isMapPassable(forwardTiles[i].x, forwardTiles[i].y, d)) return false;
 				if (this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) return false;
 			} 
 			return true;
@@ -1009,8 +1036,8 @@
 			var tilesToCheck = this.checkDiagonalTiles(horz, vert);
 			for (var i = 0; i < tilesToCheck.length; i++) {
 				if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
-				if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) return false;				
-				if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz) || !$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) return false;				
+				if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) return false;			
+				if (!this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz) || !this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) return false;				
 			} 
 			return true;
 		}
@@ -1027,11 +1054,7 @@
 				for (var i = 0; i < tilesToCheck.length; i++) {
 					if (!$gameMap.isValid(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
 					if (this.isCollidedWithCharacters(tilesToCheck[i].x, tilesToCheck[i].y)) return false;				
-					if (this === $gamePlayer && this.isInBoat()) {
-						if (!$gameMap.isBoatPassable(tilesToCheck[i].x, tilesToCheck[i].y)) return false;					
-					} else if (this === $gamePlayer && this.isInShip()) {
-						if (!$gameMap.isShipPassable(tilesToCheck[i].x, tilesToCheck[i].y)) return false;
-					} else if (!$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz) || !$gameMap.isPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) return false;
+					if (!this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, horz) || !this.isMapPassable(tilesToCheck[i].x, tilesToCheck[i].y, vert)) return false;
 				}
 				return true;
 			} else if (_Game_Player_canPassDiagonally) {
@@ -1082,21 +1105,7 @@
 			_Game_CharacterBase_setDirection.call(this, d);
 			newCoord = this.setBigSpriteCoordinates(); 
 			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
-					this._bigSprite.occupancy = oldCoord;
-					_Game_CharacterBase_setDirection.call(this, oldDir);
-				}
-				if (this === $gamePlayer && this.isInBoat()) {
-					if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
-						this._bigSprite.occupancy = oldCoord;
-						_Game_CharacterBase_setDirection.call(this, oldDir);
-					}
-				} else if (this === $gamePlayer && this.isInShip()) {
-					if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
-						this._bigSprite.occupancy = oldCoord;
-						_Game_CharacterBase_setDirection.call(this, oldDir);
-					}
-				} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, d)) {
+				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d)) {
 					this._bigSprite.occupancy = oldCoord;
 					_Game_CharacterBase_setDirection.call(this, oldDir);
 				}
@@ -1197,36 +1206,7 @@
 				this._y += yPlus;
 				var newCoord = this.setBigSpriteCoordinates();
 				for (var i = 0; i < newCoord.length; i++) {
-					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
-						this._x = oldX;
-						this._y = oldY;
-						this._bigSprite.occupancy = oldCoord;
-						this.resetStopCount();
-						this.straighten();
-						this.checkEventTriggerTouchFront(this._direction);
-						return;
-					}
-					if (this === $gamePlayer && this.isInBoat()) {
-						if (!$gameMap.isBoatPassable(newCoord[i].x, newCoord[i].y)) {
-							this._x = oldX;
-							this._y = oldY;
-							this._bigSprite.occupancy = oldCoord;
-							this.resetStopCount();
-							this.straighten();
-							this.checkEventTriggerTouchFront(this._direction);
-							return;
-						}
-					} else if (this === $gamePlayer && this.isInShip()) {
-						if (!$gameMap.isShipPassable(newCoord[i].x, newCoord[i].y)) {
-							this._x = oldX;
-							this._y = oldY;
-							this._bigSprite.occupancy = oldCoord;
-							this.resetStopCount();
-							this.straighten();
-							this.checkEventTriggerTouchFront(this._direction);
-							return;
-						}
-					} else if (!$gameMap.isPassable(newCoord[i].x, newCoord[i].y, d)) {
+					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d)) {
 						this._x = oldX;
 						this._y = oldY;
 						this._bigSprite.occupancy = oldCoord;
@@ -1285,27 +1265,7 @@
 			var twoNewCoord = character._bigSprite.occupancy;
 			var success = true;
 			for (var i = 0; i < oneNewCoord.length; i++) {
-				if (!$gameMap.isValid(oneNewCoord[i].x, oneNewCoord[i].y) || this.isCollidedWithCharacters(oneNewCoord[i].x, oneNewCoord[i].y)) {
-					character.locate(twoOldX, twoOldY);
-					this.locate(oneOldX, oneOldY);
-					success = false;
-					break;
-				}
-				if (this === $gamePlayer && this.isInBoat()) {
-					if (!$gameMap.isBoatPassable(oneNewCoord[i].x, oneNewCoord[i].y)) {
-						character.locate(twoOldX, twoOldY);
-						this.locate(oneOldX, oneOldY);
-						success = false;
-						break;
-					}
-				} else if (this === $gamePlayer && this.isInShip()) {
-					if (!$gameMap.isShipPassable(oneNewCoord[i].x, oneNewCoord[i].y)) {
-						character.locate(twoOldX, twoOldY);
-						this.locate(oneOldX, oneOldY);
-						success = false;
-						break;
-					}
-				} else if (!$gameMap.isPassable(oneNewCoord[i].x, oneNewCoord[i].y, this._direction)) {
+				if (!$gameMap.isValid(oneNewCoord[i].x, oneNewCoord[i].y) || this.isCollidedWithCharacters(oneNewCoord[i].x, oneNewCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, this._direction)) {
 					character.locate(twoOldX, twoOldY);
 					this.locate(oneOldX, oneOldY);
 					success = false;
@@ -1314,24 +1274,7 @@
 			}
 			if (success) {
 				for (var i = 0; i < twoNewCoord.length; i++) {
-					if (!$gameMap.isValid(twoNewCoord[i].x, twoNewCoord[i].y) || character.isCollidedWithCharacters(twoNewCoord[i].x, twoNewCoord[i].y)) {
-						character.locate(twoOldX, twoOldY);
-						this.locate(oneOldX, oneOldY);
-						break;
-					}
-					if (character === $gamePlayer && character.isInBoat()) {
-						if (!$gameMap.isBoatPassable(twoNewCoord[i].x, twoNewCoord[i].y)) {
-							character.locate(twoOldX, twoOldY);
-							this.locate(oneOldX, oneOldY);
-							break;
-						}
-					} else if (character === $gamePlayer && character.isInShip()) {
-						if (!$gameMap.isShipPassable(twoNewCoord[i].x, twoNewCoord[i].y)) {
-							character.locate(twoOldX, twoOldY);
-							this.locate(oneOldX, oneOldY);
-							break;
-						}
-					} else if (!$gameMap.isPassable(twoNewCoord[i].x, twoNewCoord[i].y, character._direction)) {
+					if (!$gameMap.isValid(twoNewCoord[i].x, twoNewCoord[i].y) || character.isCollidedWithCharacters(twoNewCoord[i].x, twoNewCoord[i].y) || !character.isMapPassable(newCoord[i].x, newCoord[i].y, character._direction)) {
 						character.locate(twoOldX, twoOldY);
 						this.locate(oneOldX, oneOldY);
 						break;
