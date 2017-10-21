@@ -298,7 +298,7 @@
 		this.setSpriteSizeFromEventNote();
 		this.setSpriteExSizeFromEventNote();
 		if (autoSetComment) this.setSpriteSizeFromPageComment();	
-		this.setEventCoordinates();
+		this.setBigSpriteCoordinates();
 	};		
 	
 /* 
@@ -362,14 +362,14 @@
 	Game_Event.prototype.executeBigSpriteComment = function(comment, target) {
 		target.initializeBigSprite();
 		target.bigSpriteRegexProcessing(comment);
-		target.setEventCoordinates();
+		target.setBigSpriteCoordinates();
 	};
 	
 	Game_Event.prototype.executeBigSpriteExComment = function(comment, target) {
 		target._bigSprite.exCoord = null;
 		target._bigSprite.exType = null;
 		target.bigSpriteRegexExProcessing(comment);
-		target.setEventCoordinates();
+		target.setBigSpriteCoordinates();
 	};
 	
 	Game_Event.prototype.setSpriteSizeFromPageComment = function() {		
@@ -476,7 +476,7 @@
 -------------------------------------------------------------------------------------------------------------------------------------------
 */	
 	
-	Game_Character.prototype.setEventCoordinates = function() {
+	Game_Character.prototype.setBigSpriteCoordinates = function() {
 		this._bigSprite.Y0 = this.y - Math.floor(this._bigSprite.size / 2);
 		var coord = [];
 		if (this._bigSprite.type === 'squareB') {
@@ -754,7 +754,7 @@
 		_Game_Vehicle_getOn.call(this); 
 		this.setBigVehicleSize.call($gamePlayer, this._type);
 		this.initializeBigSprite();
-		$gamePlayer.setEventCoordinates();
+		$gamePlayer.setBigSpriteCoordinates();
 	};
 	
 	var getOffCoord = null;
@@ -881,8 +881,8 @@
 		$gamePlayer._bigSprite = $gameSystem._bigSprite;
 		$gameSystem.setupBigPlayerSettings();
 		this.setBigVehicleSize(this._type);
-		this.setEventCoordinates();
-		$gamePlayer.setEventCoordinates();
+		this.setBigSpriteCoordinates();
+		$gamePlayer.setBigSpriteCoordinates();
 	};
 	
 /* 
@@ -1080,7 +1080,7 @@
 			oldCoord = this._bigSprite.occupancy; 
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
-			newCoord = this.setEventCoordinates(); 
+			newCoord = this.setBigSpriteCoordinates(); 
 			for (var i = 0; i < newCoord.length; i++) {
 				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 					this._bigSprite.occupancy = oldCoord;
@@ -1110,7 +1110,7 @@
 	Game_CharacterBase.prototype.setThrough = function(through) {
 		_Game_CharacterBase_setThrough.call(this, through);
 		if (this._bigSprite.type) {
-			this.setEventCoordinates();
+			this.setBigSpriteCoordinates();
 		}
 	};
 	
@@ -1125,20 +1125,20 @@
 					this._y = $gameMap.roundYWithDirection(this._y, d);
 					this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(d));
 					this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(d));
-					this.setEventCoordinates();
+					this.setBigSpriteCoordinates();
 					this.increaseSteps();
 					this.checkEventTriggerTouchFront(d);
 				} else {
-					this.setEventCoordinates();
+					this.setBigSpriteCoordinates();
 					this.checkEventTriggerTouchFront(d);
 				} 
 			} else {
-				this.setEventCoordinates();
+				this.setBigSpriteCoordinates();
 				this.checkEventTriggerTouchFront(this._direction);
 			}			
 		} else {
 			_Game_Character_moveStraight.call(this, d);
-			this.setEventCoordinates();
+			this.setBigSpriteCoordinates();
 			this.checkEventTriggerTouchFront(d);
 		}
 	};
@@ -1152,7 +1152,7 @@
 				this._y = $gameMap.roundYWithDirection(this._y, vert);
 				this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(horz));
 				this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(vert));
-				this.setEventCoordinates();
+				this.setBigSpriteCoordinates();
 				this.increaseSteps();
 				this.checkEventTriggerTouchFront(this._direction);				
 			} else {
@@ -1168,7 +1168,7 @@
 			}		
 		} else {
 			_Game_Character_moveDiagonally.call(this, horz, vert);
-			this.setEventCoordinates();
+			this.setBigSpriteCoordinates();
 			this.checkEventTriggerTouchFront(this._direction);
 		}
 	};
@@ -1195,7 +1195,7 @@
 				var oldY = this._y;
 				this._x += xPlus;
 				this._y += yPlus;
-				var newCoord = this.setEventCoordinates();
+				var newCoord = this.setBigSpriteCoordinates();
 				for (var i = 0; i < newCoord.length; i++) {
 					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y)) {
 						this._x = oldX;
@@ -1245,7 +1245,7 @@
 			}
 		} else {
 			_Game_Character_jump.call(this, xPlus, yPlus);
-			this.setEventCoordinates();
+			this.setBigSpriteCoordinates();
 			this.checkEventTriggerTouchFront(this._direction);
 		}
 	};
@@ -1349,7 +1349,7 @@
 	Game_CharacterBase.prototype.locate = function(x, y) {
 		_Game_CharacterBase_locate.call(this, x, y);
 		if (this._bigSprite.occupancy) {
-			this.setEventCoordinates();
+			this.setBigSpriteCoordinates();
 			this.checkEventTriggerTouchFront(this._direction);
 		}
 	};
