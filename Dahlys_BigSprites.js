@@ -233,6 +233,8 @@
  *
 */
 
+var Dahlys = Dahlys || {};
+
 (function() { 
 
 /* 
@@ -242,17 +244,17 @@
 */	
 	
 	var parameters = PluginManager.parameters('Dahlys_BigSprites');
-	var diagMovement = eval(parameters['Diagonal Movement']);
-	var diagBlock = eval(parameters['Diagonal Block']);
-	var autoSetComment = eval(parameters['Auto Set Comment']);
-	var Ev_ADT = eval(parameters['Ev All Direction Trigger']);
-	var Pl_ADT = eval(parameters['Pl All Direction Trigger']);
-	var bigBoat = String(parameters['Boat Size']) || null;
-	var bigShip = String(parameters['Ship Size']) || null;
-	var bigAirship = String(parameters['Airship Size']) || null;
-	var sideUnload = eval(parameters['Vehicle Side Get Off']);
-	var RHD = eval(parameters['Right Hand Drive']);
-	var touchFixB = eval(parameters['Touch Fix B']);
+	Dahlys.diagMovement = eval(parameters['Diagonal Movement']);
+	Dahlys.diagBlock = eval(parameters['Diagonal Block']);
+	Dahlys.autoSetComment = eval(parameters['Auto Set Comment']);
+	Dahlys.Ev_ADT = eval(parameters['Ev All Direction Trigger']);
+	Dahlys.Pl_ADT = eval(parameters['Pl All Direction Trigger']);
+	Dahlys.bigBoat = String(parameters['Boat Size']) || null;
+	Dahlys.bigShip = String(parameters['Ship Size']) || null;
+	Dahlys.bigAirship = String(parameters['Airship Size']) || null;
+	Dahlys.sideUnload = eval(parameters['Vehicle Side Get Off']);
+	Dahlys.RHD = eval(parameters['Right Hand Drive']);
+	Dahlys.touchFixB = eval(parameters['Touch Fix B']);
 	
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -297,7 +299,7 @@
 		if (!this.page()) return;
 		this.setSpriteSizeFromEventNote();
 		this.setSpriteExSizeFromEventNote();
-		if (autoSetComment) this.setSpriteSizeFromPageComment();	
+		if (Dahlys.autoSetComment) this.setSpriteSizeFromPageComment();	
 		this.setBigSpriteCoordinates();
 	};		
 	
@@ -322,14 +324,14 @@
 	};
 	
 	Game_Vehicle.prototype.setBigVehicleSize = function(type) {
-		if (type === 'boat' && bigBoat) {
-			this.setBigVehicleVariables(bigBoat);
+		if (type === 'boat' && Dahlys.bigBoat) {
+			this.setBigVehicleVariables(Dahlys.bigBoat);
 		}
-		if (type === 'ship' && bigShip) {
-			this.setBigVehicleVariables(bigShip);
+		if (type === 'ship' && Dahlys.bigShip) {
+			this.setBigVehicleVariables(Dahlys.bigShip);
 		}
-		if (type === 'airship' && bigAirship) {
-			this.setBigVehicleVariables(bigAirship);
+		if (type === 'airship' && Dahlys.bigAirship) {
+			this.setBigVehicleVariables(Dahlys.bigAirship);
 		}
 	};
 	
@@ -662,7 +664,7 @@
 	
 	Game_CharacterBase.prototype.checkDiagonalTiles = function(horz, vert) {
 		var thisCoord = this._bigSprite.occupancy;
-		if (diagBlock) {
+		if (Dahlys.diagBlock) {
 			var forwardTiles = this.checkAheadTiles(horz).concat(this.checkAheadTiles(vert));
 		} else {
 			var forwardTiles = [];
@@ -714,7 +716,7 @@
 				}
 			}
 			if (this._vehicleType !== 'airship') {
-				if (Pl_ADT) {
+				if (Dahlys.Pl_ADT) {
 					var ahead = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
 				} else {
 					var ahead = this.checkAheadTiles(d);
@@ -770,8 +772,8 @@
 					return false;
 				}
 			} else {				
-				if (sideUnload) {
-					if (RHD) {
+				if (Dahlys.sideUnload) {
+					if (Dahlys.RHD) {
 						if (d === 2) {var d1 = 6; var d2 = 4;}
 						if (d === 8) {var d1 = 4; var d2 = 6;}
 						if (d === 4) {var d1 = 2; var d2 = 8;}
@@ -782,7 +784,7 @@
 						if (d === 4) {var d1 = 8; var d2 = 2;}
 						if (d === 6) {var d1 = 2; var d2 = 8;}
 					}
-					var side1Tiles = this.checkAheadTiles.call($gamePlayer, d1);
+					var side1Tiles = $gamePlayer.checkAheadTiles.call($gamePlayer, d1);
 					var options = [];
 					for (var i = 0; i < side1Tiles.length; i++) {
 						if ($gameMap.isValid(side1Tiles[i].x, side1Tiles[i].y) && $gameMap.isPassable(side1Tiles[i].x, side1Tiles[i].y, this.reverseDir(d1)) && !this.isCollidedWithCharacters(side1Tiles[i].x, side1Tiles[i].y)) {
@@ -805,7 +807,7 @@
 						getOffCoord = options[middleOption];
 						return true;
 					}
-					var side2Tiles = this.checkAheadTiles.call($gamePlayer, d2);
+					var side2Tiles = $gamePlayer.checkAheadTiles.call($gamePlayer, d2);
 					for (var i = 0; i < side2Tiles.length; i++) {
 						if ($gameMap.isValid(side2Tiles[i].x, side2Tiles[i].y) && $gameMap.isPassable(side2Tiles[i].x, side2Tiles[i].y, this.reverseDir(d2)) && !this.isCollidedWithCharacters(side2Tiles[i].x, side2Tiles[i].y)) {
 							var plusX = 0;
@@ -894,7 +896,7 @@
 	var _Game_CharacterBase_checkEventTriggerTouchFront = Game_CharacterBase.prototype.checkEventTriggerTouchFront;
 	Game_CharacterBase.prototype.checkEventTriggerTouchFront = function(d) {
 		if (this._bigSprite.type) {
-			if (Ev_ADT) {
+			if (Dahlys.Ev_ADT) {
 				var surroundTiles = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
 				for (var i = 0; i < surroundTiles.length; i++) {
 					this.checkEventTriggerTouch(surroundTiles[i].x, surroundTiles[i].y);
@@ -924,7 +926,7 @@
 	var _Game_Player_checkEventTriggerThere = Game_Player.prototype.checkEventTriggerThere;
 	Game_Player.prototype.checkEventTriggerThere = function(triggers) {
 		if (this.canStartLocalEvents() && this._bigSprite.type) {
-			if (Pl_ADT) {
+			if (Dahlys.Pl_ADT) {
 				var surroundTiles = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
 				for (var i = 0; i < surroundTiles.length; i++) {
 					if (!$gameMap.isAnyEventStarting()) this.startMapEvent(surroundTiles[i].x, surroundTiles[i].y, triggers, true);
@@ -964,15 +966,8 @@
 	var _Game_CharacterBase_isMapPassable = Game_CharacterBase.prototype.isMapPassable;
 	Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
 		if (this._bigSprite.type) {
-			if (!$gameMap.isPassable(x, y, d)) return false;
-			var ahead = this.checkAheadTiles(d);
 			var d2 = this.reverseDir(d);
-			for (var i = 0; i < ahead.length; i++) {
-				if (!$gameMap.isPassable(ahead[i].x, ahead[i].y, d2)) {
-					return false;
-				}
-			}
-			return true;
+			return $gameMap.isPassable(x, y, d) && $gameMap.isPassable(x, y, d2);
 		} else return _Game_CharacterBase_isMapPassable.call(this, x, y, d);
 	};
 	
@@ -980,15 +975,15 @@
 	Game_Vehicle.prototype.isMapPassable = function(x, y, d) {
 		if ($gamePlayer._bigSprite.type) {
 			if (this.isAirship()) return true;
-			var ahead = $gamePlayer.checkAheadTiles(d);
-			for (var i = 0; i < ahead.length; i++) {
-				if (this.isBoat() && !$gameMap.isBoatPassable(ahead[i].x, ahead[i].y)) {
-					return false;
-				} else if (this.isShip() && !$gameMap.isShipPassable(ahead[i].x, ahead[i].y)) {
-					return false;				
-				}
+			if (this.isBoat()) {
+				return $gameMap.isBoatPassable(x, y);
+			} else if (this.isShip()) {
+				return $gameMap.isShipPassable(x, y);
+			} else if (this.isAirship()) {
+				return true;
+			} else {
+				return false;
 			}
-			return true;
 		} else return _Game_Vehicle_isMapPassable.call(this, x, y, d);
 	};
 	
@@ -1044,7 +1039,7 @@
 		return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);		
 	};	
 	
-	if (diagMovement) {
+	if (Dahlys.diagMovement) {
 		var _Game_Player_canPassDiagonally = Game_Player.prototype.canPassDiagonally;
 		Game_Player.prototype.canPassDiagonally = function(x, y, horz, vert) {
 			if (this._bigSprite.type) {
@@ -1060,7 +1055,7 @@
 			} else if (_Game_Player_canPassDiagonally) {
 				return _Game_Player_canPassDiagonally.call(this, x, y, horz, vert);
 			} else {
-				return _Game_CharacterBase_canPassDiagonally.call(this, x, y, horz, vert);
+				return this.canPassDiagonally(this, x, y, horz, vert);
 			}			
 		};
 	}
@@ -1104,12 +1099,14 @@
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
 			newCoord = this.setBigSpriteCoordinates(); 
-			for (var i = 0; i < newCoord.length; i++) {
-				if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d)) {
-					this._bigSprite.occupancy = oldCoord;
-					_Game_CharacterBase_setDirection.call(this, oldDir);
-				}
-			} 
+			if (oldCoord !== newCoord) {
+				for (var i = 0; i < newCoord.length; i++) {
+					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d)) {
+						this._bigSprite.occupancy = oldCoord;
+						_Game_CharacterBase_setDirection.call(this, oldDir);
+					}
+				} 
+			}
 		} else {
 			_Game_CharacterBase_setDirection.call(this, d);
 		}	
@@ -1297,7 +1294,7 @@
 		}
 	};
 	
-	if (touchFixB) {
+	if (Dahlys.touchFixB) {
 		Game_Character.prototype.findDirectionTo = function(goalX, goalY) {
 			if (this._bigSprite.type && this._bigSprite.type.match(/B/)) {
 				var centerY = this._bigSprite.Y0;
