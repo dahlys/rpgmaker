@@ -31,8 +31,12 @@
  * @param Airship Size
  * @desc Size of airship
  * 
- * @param Enter/Exit Vehicle Side
- * @desc Get on/off the side of big vehicle instead of the front. More visually appealing.
+ * @param Enter Vehicle Side
+ * @desc Get on only when facing the side of big vehicle instead of from any direction.
+ * @default false
+ * 
+ * @param Exit Vehicle Side
+ * @desc Get off the side of big vehicle instead of the front. More visually appealing.
  * @default true
  * 
  * @param Right Hand Drive
@@ -252,7 +256,8 @@ var Dahlys = Dahlys || {};
 	Dahlys.bigBoat = String(parameters['Boat Size']) || null;
 	Dahlys.bigShip = String(parameters['Ship Size']) || null;
 	Dahlys.bigAirship = String(parameters['Airship Size']) || null;
-	Dahlys.sideUnload = eval(parameters['Enter/Exit Vehicle Side']);
+	Dahlys.sideLoad = eval(parameters['Enter Vehicle Side']);
+	Dahlys.sideUnload = eval(parameters['Exit Vehicle Side']);
 	Dahlys.RHD = eval(parameters['Right Hand Drive']);
 	Dahlys.touchFixB = eval(parameters['Touch Fix B']);
 	
@@ -723,7 +728,7 @@ var Dahlys = Dahlys || {};
 				}				
 				for (var i = 0; i < ahead.length; i++) {
 					if ($gameMap.ship().pos(ahead[i].x, ahead[i].y)) {
-						if (Dahlys.sideUnload) {
+						if (Dahlys.sideLoad) {
 							var d1 = this._direction;
 							var d2 = $gameMap.ship()._direction;
 							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
@@ -736,7 +741,7 @@ var Dahlys = Dahlys || {};
 						}					
 						break;
 					} else if ($gameMap.boat().pos(ahead[i].x, ahead[i].y)) {
-						if (Dahlys.sideUnload) {
+						if (Dahlys.sideLoad) {
 							var d1 = this._direction; console.log(d1);
 							var d2 = $gameMap.boat()._direction; console.log(d2);
 							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
