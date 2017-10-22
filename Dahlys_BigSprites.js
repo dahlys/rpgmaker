@@ -31,8 +31,8 @@
  * @param Airship Size
  * @desc Size of airship
  * 
- * @param Vehicle Side Get Off
- * @desc Get off the side of big vehicle instead of the front. More visually appealing.
+ * @param Enter/Exit Vehicle Side
+ * @desc Get on/off the side of big vehicle instead of the front. More visually appealing.
  * @default true
  * 
  * @param Right Hand Drive
@@ -252,7 +252,7 @@ var Dahlys = Dahlys || {};
 	Dahlys.bigBoat = String(parameters['Boat Size']) || null;
 	Dahlys.bigShip = String(parameters['Ship Size']) || null;
 	Dahlys.bigAirship = String(parameters['Airship Size']) || null;
-	Dahlys.sideUnload = eval(parameters['Vehicle Side Get Off']);
+	Dahlys.sideUnload = eval(parameters['Enter/Exit Vehicle Side']);
 	Dahlys.RHD = eval(parameters['Right Hand Drive']);
 	Dahlys.touchFixB = eval(parameters['Touch Fix B']);
 	
@@ -706,7 +706,7 @@ var Dahlys = Dahlys || {};
 	
 	var _Game_Player_getOnVehicle = Game_Player.prototype.getOnVehicle;
 	Game_Player.prototype.getOnVehicle = function() {
-		if (this._bigSprite.type) {
+		if ($gameMap.boat()._bigSprite.type || $gameMap.ship()._bigSprite.type || $gameMap.airship()._bigSprite.type) {
 			var d = this.direction();
 			var coord = this._bigSprite.occupancy;
 			for (var i = 0; i < coord.length; i++) {
@@ -720,13 +720,33 @@ var Dahlys = Dahlys || {};
 					var ahead = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
 				} else {
 					var ahead = this.checkAheadTiles(d);
-				}
+				}				
 				for (var i = 0; i < ahead.length; i++) {
 					if ($gameMap.ship().pos(ahead[i].x, ahead[i].y)) {
-						this._vehicleType = 'ship';
+						if (Dahlys.sideUnload) {
+							var d1 = this._direction;
+							var d2 = $gameMap.ship()._direction;
+							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
+								this._vehicleType = 'ship';
+							} else if ((d2 === 2 || d2 === 8) && (d1 === 4 || d1 === 6)) {
+								this._vehicleType = 'ship';
+							}
+						} else {
+							this._vehicleType = 'ship';
+						}					
 						break;
 					} else if ($gameMap.boat().pos(ahead[i].x, ahead[i].y)) {
-						this._vehicleType = 'boat';
+						if (Dahlys.sideUnload) {
+							var d1 = this._direction; console.log(d1);
+							var d2 = $gameMap.boat()._direction; console.log(d2);
+							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
+								this._vehicleType = 'boat';
+							} else if ((d2 === 2 || d2 === 8) && (d1 === 4 || d1 === 6)) {
+								this._vehicleType = 'boat';
+							}
+						} else {
+							this._vehicleType = 'boat';
+						}
 						break;
 					}
 				}
