@@ -139,7 +139,10 @@
  * e.g. 5 diamond 2 makes the big vehicle a diamond of radius 2 tiles around 
  * the center of the big sprite image.
  * 
- * Vehicle Side Get Off: Get off the vehicle when the side is aligned with the
+ * Enter Vehicle Side: Get on the vehicle only when the player is facing the 
+ * side of the vehicle.
+ * 
+ * Exit Vehicle Side: Get off the vehicle when the side is aligned with the
  * landing point and 'ok' is triggered. Looks nicer than crawling over the front
  * of the vehicle. Good for car parking and boat docking on the side.
  *
