@@ -745,8 +745,8 @@ var Dahlys = Dahlys || {};
 						break;
 					} else if ($gameMap.boat().pos(ahead[i].x, ahead[i].y)) {
 						if (Dahlys.sideLoad) {
-							var d1 = this._direction; console.log(d1);
-							var d2 = $gameMap.boat()._direction; console.log(d2);
+							var d1 = this._direction;
+							var d2 = $gameMap.boat()._direction;
 							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
 								this._vehicleType = 'boat';
 							} else if ((d2 === 2 || d2 === 8) && (d1 === 4 || d1 === 6)) {
@@ -761,10 +761,17 @@ var Dahlys = Dahlys || {};
 			}
 			if (this.isInVehicle()) {
 				this._vehicleGettingOn = true;
-				if (!this.isInAirship()) {
-					this.forceMoveForward();
-				}
 				this.gatherFollowers();
+				if (this.isInBoat()) var vehicle = $gameMap.boat();
+				if (this.isInShip()) var vehicle = $gameMap.ship();
+				if (this.isInAirship()) var vehicle = $gameMap.airship();
+				var x = vehicle._x;
+				var y = vehicle._y;
+				this.setTransparent(true);
+				while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
+				while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
+				while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
+				while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
 			}
 			return this._vehicleGettingOn;
 		}
@@ -775,12 +782,6 @@ var Dahlys = Dahlys || {};
 	Game_Vehicle.prototype.getOn = function() {
 		$gameSystem._bigSprite = $gamePlayer._bigSprite;
 		$gamePlayer.initializeBigSprite();
-		var x = this.x;
-		var y = this.y;
-		while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
-		while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
-		while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
-		while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
 		_Game_Vehicle_getOn.call(this); 
 		this.setBigVehicleSize.call($gamePlayer, this._type);
 		this.initializeBigSprite();
@@ -1143,9 +1144,7 @@ var Dahlys = Dahlys || {};
 	var _Game_CharacterBase_setThrough = Game_CharacterBase.prototype.setThrough;
 	Game_CharacterBase.prototype.setThrough = function(through) {
 		_Game_CharacterBase_setThrough.call(this, through);
-		if (this._bigSprite.type) {
-			this.setBigSpriteCoordinates();
-		}
+		this.setBigSpriteCoordinates();
 	};
 	
 	var _Game_Character_moveStraight = Game_Character.prototype.moveStraight;
