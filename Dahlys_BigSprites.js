@@ -183,26 +183,26 @@
  * To go beyond the basic rectangle/circle/diamond shape, use the following
  * comments:
  * 
- * Type A: <bigPlayer: above left right> <bigPlayerEx: dx,dy dx,dy dx,dy> 
+ * Type A: <bigPlayer: above left right> <bigPlayerSp: dx,dy dx,dy dx,dy> 
  * where dx is the horizontal distance from the main tile, and dy is the vertical
  * distance. If you wish to use Ex without the basic rectangle, input:
- * <bigPlayer: 0 0 0> <bigPlayerEx: dx,dy dx,dy dx,dy> 
- * e.g. <bigPlayer: 0 0 0> <bigPlayerEx: 0,-1 1,-1>
+ * <bigPlayer: 0 0 0> <bigPlayerSp: dx,dy dx,dy dx,dy> 
+ * e.g. <bigPlayer: 0 0 0> <bigPlayerSp: 0,-1 1,-1>
  * Only the tile right above the main tile and the tile to the top-right of the
  * main tile are solid.
  * You can add as many dx,dy pairs as you want.
  *
- * Type B: <bigPlayerEx: dx,dy dx,dy dx,dy>
+ * Type B: <bigPlayerSp: dx,dy dx,dy dx,dy>
  * The basic type B bigPlayer command is optional. dx and dy are relative to the
  * new center for the sprite facing down. When the sprite turns around, the extra
  * solid tiles will rotate accordingly.
  *
- * Type C: <bigPlayerEx: [down] [left] [right] [up]>
+ * Type C: <bigPlayerSp: [down] [left] [right] [up]>
  * where [direction] = [dx,dy dx,dy dx,dy]
- * Type C can also be used without the bigPlayer command. Type C bigPlayerEx has 
+ * Type C can also be used without the bigPlayer command. Type C bigPlayerSp has 
  * the highest level of customization as you determine which tiles are solid for
  * every single direction (Type C bigPlayer always has the main tile solid).
- * e.g. <bigPlayerEx: [0,1] [1,-1] [1,0] [0,-1]>
+ * e.g. <bigPlayerSp: [0,1] [1,-1] [1,0] [0,-1]>
  *
  * ------------------------------------------------------------------------------
  *                                  FOR EVENTS
@@ -229,11 +229,11 @@
  *
  * And custom shapes as well:
  *
- * Type A: <bigPlayer: above left right> <bigPlayerEx: dx,dy dx,dy dx,dy> 
+ * Type A: <bigEvent: above left right> <bigPlayerSp: dx,dy dx,dy dx,dy> 
  *
- * Type B: <bigPlayerEx: dx,dy dx,dy dx,dy>
+ * Type B: <bigEventSp: dx,dy dx,dy dx,dy>
  *
- * Type C: <bigPlayerEx: [down] [left] [right] [up]>
+ * Type C: <bigEventSp: [down] [left] [right] [up]>
  * where [direction] = [dx,dy dx,dy dx,dy]
  *
  * See Player section for what dx and dy mean.
@@ -257,8 +257,11 @@ var Dahlys = Dahlys || {};
 	Dahlys.Ev_ADT = eval(parameters['Ev All Direction Trigger']);
 	Dahlys.Pl_ADT = eval(parameters['Pl All Direction Trigger']);
 	Dahlys.bigBoat = String(parameters['Boat Size']) || null;
+	Dahlys.bigBoatSp = String(parameters['Boat Sp Size']) || null;
 	Dahlys.bigShip = String(parameters['Ship Size']) || null;
+	Dahlys.bigShipSp = String(parameters['Ship Sp Size']) || null;
 	Dahlys.bigAirship = String(parameters['Airship Size']) || null;
+	Dahlys.bigAirshipSp = String(parameters['Airship Sp Size']) || null;
 	Dahlys.sideLoad = eval(parameters['Enter Vehicle Side']);
 	Dahlys.sideUnload = eval(parameters['Exit Vehicle Side']);
 	Dahlys.RHD = eval(parameters['Right Hand Drive']);
@@ -277,7 +280,7 @@ var Dahlys = Dahlys || {};
 	};
 	
 	Game_System.prototype.setupBigPlayerSettings = function() {
-		this._bigSprite = {'type': null, 'Y0': null, 'size': null, 'front': null, 'back': null, 'left': null, 'right': null, 'radius': null, 'exCoord': null, 'exType': null, 'occupancy': null};
+		this._bigSprite = {'type': null, 'Y0': null, 'size': null, 'front': null, 'back': null, 'left': null, 'right': null, 'radius': null, 'spCoord': null, 'spType': null, 'occupancy': null};
 	};
 	
 	var _Game_Character_initialize = Game_Character.prototype.initialize;
@@ -287,7 +290,7 @@ var Dahlys = Dahlys || {};
 	};
 	
 	Game_Character.prototype.initializeBigSprite = function() {
-		this._bigSprite = {'type': null, 'Y0': this.y, 'size': 1, 'front': 0, 'back': 0, 'left': 0, 'right': 0, 'radius': 0, 'exCoord': null, 'exType': null, 'occupancy': [{'x': this.x, 'y': this.y}]};
+		this._bigSprite = {'type': null, 'Y0': this.y, 'size': 1, 'front': 0, 'back': 0, 'left': 0, 'right': 0, 'radius': 0, 'spCoord': null, 'spType': null, 'occupancy': [{'x': this.x, 'y': this.y}]};
 	};
 		
 	var _Game_Vehicle_initialize = Game_Vehicle.prototype.initialize;
@@ -306,7 +309,7 @@ var Dahlys = Dahlys || {};
 	Game_Event.prototype.setupBigSprite = function() {
 		if (!this.page()) return;
 		this.setSpriteSizeFromEventNote();
-		this.setSpriteExSizeFromEventNote();
+		this.setSpriteSpSizeFromEventNote();
 		if (Dahlys.autoSetComment) this.setSpriteSizeFromPageComment();	
 		this.setBigSpriteCoordinates();
 	};		
@@ -324,12 +327,11 @@ var Dahlys = Dahlys || {};
 		this.bigSpriteRegexProcessing(note);
 	};
 	
-	Game_Event.prototype.setSpriteExSizeFromEventNote = function() {
+	Game_Event.prototype.setSpriteSpSizeFromEventNote = function() {
 		if (this.isSpawnEvent) return;
-		var note = $dataMap.events[this._eventId].meta.bigSpriteEx;
+		var note = $dataMap.events[this._eventId].meta.bigSpriteSp;
 		if (!note) return;
-		if (!note) return;
-		this.bigSpriteExRegexProcessing(note);
+		this.bigSpriteSpRegexProcessing(note);
 	};
 	
 	Game_Vehicle.prototype.setBigVehicleSize = function(type) {
@@ -357,14 +359,14 @@ var Dahlys = Dahlys || {};
 			if (this._comments[i].match(/bigEvent:/i)) {
 				thisEvent.executeBigSpriteComment(this._comments[i], thisEvent);
 			}
-			if (this._comments[i].match(/bigEventEx:/i)) {
-				thisEvent.executeBigSpriteExComment(this._comments[i], thisEvent);
+			if (this._comments[i].match(/bigEventSp:/i)) {
+				thisEvent.executeBigSpriteSpComment(this._comments[i], thisEvent);
 			}			
 			if (this._comments[i].match(/bigPlayer:/i)) {
 				thisEvent.executeBigSpriteComment(this._comments[i], $gamePlayer);
 			}
-			if (this._comments[i].match(/bigPlayerEx:/i)) {
-				thisEvent.executeBigSpriteExComment(this._comments[i], $gamePlayer);
+			if (this._comments[i].match(/bigPlayerSp:/i)) {
+				thisEvent.executeBigSpriteSpComment(this._comments[i], $gamePlayer);
 			}
 		}
 		return result;
@@ -376,10 +378,10 @@ var Dahlys = Dahlys || {};
 		target.setBigSpriteCoordinates();
 	};
 	
-	Game_Event.prototype.executeBigSpriteExComment = function(comment, target) {
-		target._bigSprite.exCoord = null;
-		target._bigSprite.exType = null;
-		target.bigSpriteRegexExProcessing(comment);
+	Game_Event.prototype.executeBigSpriteSpComment = function(comment, target) {
+		target._bigSprite.spCoord = null;
+		target._bigSprite.spType = null;
+		target.bigSpriteSpRegexProcessing(comment);
 		target.setBigSpriteCoordinates();
 	};
 	
@@ -390,7 +392,7 @@ var Dahlys = Dahlys || {};
 				var params = pagelist[i].parameters;
 				for (var j = 0; j < params.length; j++) {				
 					if (params[j].match(/bigSprite:/i)) this.bigSpriteRegexProcessing(params[j]);
-					else if (params[j].match(/bigSpriteEx:/i)) this.bigSpriteRegexExProcessing(params[j]);
+					else if (params[j].match(/bigSpriteSp:/i)) this.bigSpriteSpRegexProcessing(params[j]);
 				}
 			}
 		}
@@ -435,7 +437,7 @@ var Dahlys = Dahlys || {};
 		}		
 	};
 	
-	Game_Character.prototype.bigSpriteExRegexProcessing = function(comment) {
+	Game_Character.prototype.bigSpriteSpRegexProcessing = function(comment) {
 		var capturingRegexA = /(\d+|-\d+),(\d+|-\d+)/g
 		var capturingRegexC = /(?:\[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])(?: \[)(.*)(?:\])/
 		var capturingRegexC2 = /(\d+|-\d+),(\d+|-\d+)/g
@@ -466,8 +468,8 @@ var Dahlys = Dahlys || {};
 					if (match) coord.up.push({'dx': Number(match[1]), 'dy': Number(match[2])});
 				} while (match);
 			}
-			this._bigSprite.exCoord = coord;
-			this._bigSprite.exType = 'C';
+			this._bigSprite.spCoord = coord;
+			this._bigSprite.spType = 'C';
 		}
 		if (comment.match(/(\d+|-\d+),(\d+|-\d+)/)) {
 			var coord = [];
@@ -475,9 +477,9 @@ var Dahlys = Dahlys || {};
 				var match = capturingRegexA.exec(comment);
 				if (match) coord.push({'dx': Number(match[1]), 'dy': Number(match[2])});
 			} while (match);
-			this._bigSprite.exCoord = coord;
-			if (this._bigSprite.type === 'squareA') this._bigSprite.exType = 'A';
-			else this._bigSprite.exType = 'B';
+			this._bigSprite.spCoord = coord;
+			if (this._bigSprite.type === 'squareA') this._bigSprite.spType = 'A';
+			else this._bigSprite.spType = 'B';
 		}
 	};	
 
@@ -562,47 +564,47 @@ var Dahlys = Dahlys || {};
 				}
 			}
 		}
-		if (this._bigSprite.exType === 'A') {
-			var exCoord = this._bigSprite.exCoord;
-			for (var i = 0; i < exCoord.length; i++) {
-				coord.push({'x': this.x + exCoord[i].dx, 'y': this.y + exCoord[i].dy});
+		if (this._bigSprite.spType === 'A') {
+			var spCoord = this._bigSprite.spCoord;
+			for (var i = 0; i < spCoord.length; i++) {
+				coord.push({'x': this.x + spCoord[i].dx, 'y': this.y + spCoord[i].dy});
 			}
 		}
-		if (this._bigSprite.exType === 'B') {
-			var exCoord = this._bigSprite.exCoord;
+		if (this._bigSprite.spType === 'B') {
+			var spCoord = this._bigSprite.spCoord;
 			if (this._direction === 2) {
-				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x + exCoord[i].dx, 'y': this._bigSprite.Y0 + exCoord[i].dy});
+				for (var i = 0; i < spCoord.length; i++) {
+					coord.push({'x': this.x + spCoord[i].dx, 'y': this._bigSprite.Y0 + spCoord[i].dy});
 				}
 			} else if (this._direction === 4) {
-				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x - exCoord[i].dy, 'y': this._bigSprite.Y0 + exCoord[i].dx});
+				for (var i = 0; i < spCoord.length; i++) {
+					coord.push({'x': this.x - spCoord[i].dy, 'y': this._bigSprite.Y0 + spCoord[i].dx});
 				}
 			} else if (this._direction === 6) {
-				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x + exCoord[i].dy, 'y': this._bigSprite.Y0 - exCoord[i].dx});
+				for (var i = 0; i < spCoord.length; i++) {
+					coord.push({'x': this.x + spCoord[i].dy, 'y': this._bigSprite.Y0 - spCoord[i].dx});
 				}
 			} else if (this._direction === 8) {
-				for (var i = 0; i < exCoord.length; i++) {
-					coord.push({'x': this.x - exCoord[i].dx, 'y': this._bigSprite.Y0 - exCoord[i].dy});
+				for (var i = 0; i < spCoord.length; i++) {
+					coord.push({'x': this.x - spCoord[i].dx, 'y': this._bigSprite.Y0 - spCoord[i].dy});
 				}
 			}			
 		}
-		if (this._bigSprite.exType === 'C') {
+		if (this._bigSprite.spType === 'C') {
 			if (this._direction === 2) {
-				var exCoord = this._bigSprite.exCoord.down;
+				var spCoord = this._bigSprite.spCoord.down;
 			} else if (this._direction === 4) {
-				var exCoord = this._bigSprite.exCoord.left;
+				var spCoord = this._bigSprite.spCoord.left;
 			} else if (this._direction === 6) {
-				var exCoord = this._bigSprite.exCoord.right;
+				var spCoord = this._bigSprite.spCoord.right;
 			} else if (this._direction === 8) {
-				var exCoord = this._bigSprite.exCoord.up;
+				var spCoord = this._bigSprite.spCoord.up;
 			}
-			for (var i = 0; i < exCoord.length; i++) {
-				coord.push({'x': this.x + exCoord[i].dx, 'y': this.y + exCoord[i].dy});
+			for (var i = 0; i < spCoord.length; i++) {
+				coord.push({'x': this.x + spCoord[i].dx, 'y': this.y + spCoord[i].dy});
 			}
 		}
-		if (!this._bigSprite.type && !this._bigSprite.exType) {
+		if (!this._bigSprite.type && !this._bigSprite.spType) {
 			coord.push({'x': this.x, 'y': this.y});
 		}
 		this._bigSprite.occupancy = coord;
@@ -666,12 +668,12 @@ var Dahlys = Dahlys || {};
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, d);
 			if ($gameMap.isLoopHorizontal()) {
-				if (tempX >= $gameMap.width()) {tempX -= $gameMap.width();};
+				if (tempX >= $gameMap.width()) {tempX -= $gameMap.width();}
 				else if (tempX < 0) {tempX += $gameMap.width();};
 			}
 			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, d);
 			if ($gameMap.isLoopVertical()) {
-				if (tempY >= $gameMap.height()) {tempY -= $gameMap.height();};
+				if (tempY >= $gameMap.height()) {tempY -= $gameMap.height();}
 				else if (tempY < 0) {tempY += $gameMap.height();};
 			}
 			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY})) forwardTiles.push({'x': tempX,'y': tempY});
@@ -689,12 +691,12 @@ var Dahlys = Dahlys || {};
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, horz);
 			if ($gameMap.isLoopHorizontal()) {
-				if (tempX >= $gameMap.width()) {tempX -= $gameMap.width();};
+				if (tempX >= $gameMap.width()) {tempX -= $gameMap.width();}
 				else if (tempX < 0) {tempX += $gameMap.width();};
 			}
 			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, vert);
 			if ($gameMap.isLoopVertical()) {
-				if (tempY >= $gameMap.height()) {tempY -= $gameMap.height();};
+				if (tempY >= $gameMap.height()) {tempY -= $gameMap.height();}
 				else if (tempY < 0) {tempY += $gameMap.height();};
 			}
 			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY}) && !forwardTiles.some(function(xy) {return xy.x === tempX && xy.y === tempY})) {
@@ -711,7 +713,7 @@ var Dahlys = Dahlys || {};
 */
 	
 	Game_Player.prototype.forceMoveDirection = function(d) {
-		this.setThrough(true);
+		this.setThrough(true);		
 		this.setDirection(d);
 		this.moveForward();
 		this.setThrough(false);
@@ -781,7 +783,7 @@ var Dahlys = Dahlys || {};
 				this.gatherFollowers();
 				if (this.isInBoat()) var vehicle = $gameMap.boat();
 				if (this.isInShip()) var vehicle = $gameMap.ship();
-				if (this.isInAirship()) var vehicle = $gameMap.airship();
+				if (this.isInAirship()) var vehicle = $gameMap.airship();				
 				var x = vehicle._x;
 				var y = vehicle._y;
 				this.setTransparent(true);
@@ -830,7 +832,7 @@ var Dahlys = Dahlys || {};
 						if (d === 4) {var d1 = 8; var d2 = 2;}
 						if (d === 6) {var d1 = 2; var d2 = 8;}
 					}
-					var side1Tiles = $gamePlayer.checkAheadTiles.call($gamePlayer, d1);
+					var side1Tiles = this.checkAheadTiles.call($gamePlayer, d1);
 					var options = [];
 					for (var i = 0; i < side1Tiles.length; i++) {
 						if ($gameMap.isValid(side1Tiles[i].x, side1Tiles[i].y) && $gameMap.isPassable(side1Tiles[i].x, side1Tiles[i].y, this.reverseDir(d1)) && !this.isCollidedWithCharacters(side1Tiles[i].x, side1Tiles[i].y)) {
@@ -853,7 +855,7 @@ var Dahlys = Dahlys || {};
 						getOffCoord = options[middleOption];
 						return true;
 					}
-					var side2Tiles = $gamePlayer.checkAheadTiles.call($gamePlayer, d2);
+					var side2Tiles = this.checkAheadTiles.call($gamePlayer, d2);
 					for (var i = 0; i < side2Tiles.length; i++) {
 						if ($gameMap.isValid(side2Tiles[i].x, side2Tiles[i].y) && $gameMap.isPassable(side2Tiles[i].x, side2Tiles[i].y, this.reverseDir(d2)) && !this.isCollidedWithCharacters(side2Tiles[i].x, side2Tiles[i].y)) {
 							var plusX = 0;
@@ -913,7 +915,9 @@ var Dahlys = Dahlys || {};
 	var _Game_Vehicle_getOff = Game_Vehicle.prototype.getOff;
 	Game_Vehicle.prototype.getOff = function() {
 		var dir = this._direction;
-		$gamePlayer.initializeBigSprite();
+		$gamePlayer.initializeBigSprite();		
+		_Game_Vehicle_getOff.call(this);
+		this.setDirection(dir);
 		if (getOffCoord) {
 			var x = getOffCoord.x;
 			var y = getOffCoord.y;
@@ -922,9 +926,7 @@ var Dahlys = Dahlys || {};
 			while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
 			while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
 			$gamePlayer.setDirection(getOffCoord.d);
-		}		
-		_Game_Vehicle_getOff.call(this);
-		this.setDirection(dir);
+		}
 		getOffCoord = null;
 		$gamePlayer._bigSprite = $gameSystem._bigSprite;
 		$gameSystem.setupBigPlayerSettings();
