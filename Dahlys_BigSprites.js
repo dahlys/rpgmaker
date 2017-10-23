@@ -607,6 +607,18 @@ var Dahlys = Dahlys || {};
 		if (!this._bigSprite.type && !this._bigSprite.spType) {
 			coord.push({'x': this.x, 'y': this.y});
 		}
+		if (DataManager.isMapLoaded()) {
+			for (var k = 0; k < coord.length; k++) {
+				if ($gameMap.isLoopHorizontal()) {
+					if (coord[k].x >= $gameMap.width()) {coord[k].x -= $gameMap.width();}
+					else if (coord[k].x < 0) {coord[k].x += $gameMap.width();};
+				}
+				if ($gameMap.isLoopVertical()) {
+					if (coord[k].y >= $gameMap.height()) {coord[k].y -= $gameMap.height();}
+					else if (coord[k].y < 0) {coord[k].y += $gameMap.height();};
+				}
+			}
+		}
 		this._bigSprite.occupancy = coord;
 		return this._bigSprite.occupancy;
 	};
@@ -846,6 +858,16 @@ var Dahlys = Dahlys || {};
 						}
 					}
 					if (options.length > 0) {
+						for (var i = 0; i < options.length; i++) {
+							if ($gameMap.isLoopHorizontal()) {
+								if (options[i].x >= $gameMap.width()) {options[i].x -= $gameMap.width();}
+								else if (options[i].x < 0) {options[i].x += $gameMap.width();};
+							}
+							if ($gameMap.isLoopVertical()) {
+								if (options[i].y >= $gameMap.height()) {options[i].y -= $gameMap.height();}
+								else if (options[i].y < 0) {options[i].y += $gameMap.height();};
+							}
+						}
 						if (options.length % 2 === 0) {
 							if (d === 2) var middleOption = options.length/2 - 1;
 							else var middleOption = options.length/2;
@@ -868,6 +890,16 @@ var Dahlys = Dahlys || {};
 						}
 					}
 					if (options.length > 0) {
+						for (var i = 0; i < options.length; i++) {
+							if ($gameMap.isLoopHorizontal()) {
+								if (options[i].x >= $gameMap.width()) {options[i].x -= $gameMap.width();}
+								else if (options[i].x < 0) {options[i].x += $gameMap.width();};
+							}
+							if ($gameMap.isLoopVertical()) {
+								if (options[i].y >= $gameMap.height()) {options[i].y -= $gameMap.height();}
+								else if (options[i].y < 0) {options[i].y += $gameMap.height();};
+							}
+						}
 						if (options.length % 2 === 0) {
 							if (d === 2) var middleOption = options.length/2 - 1;
 							else var middleOption = options.length/2;
@@ -889,6 +921,14 @@ var Dahlys = Dahlys || {};
 						if (this._direction === 8) plusY = 1;
 						if (this._direction === 4) plusX = 1;
 						getOffCoord = {'x': forwardTiles[i].x + plusX, 'y': forwardTiles[i].y + plusY, 'd': this._direction};
+						if ($gameMap.isLoopHorizontal()) {
+							if (getOffCoord.x >= $gameMap.width()) {getOffCoord.x -= $gameMap.width();}
+							else if (getOffCoord.x < 0) {getOffCoord.x += $gameMap.width();};
+						}
+						if ($gameMap.isLoopVertical()) {
+							if (getOffCoord.y >= $gameMap.height()) {getOffCoord.y -= $gameMap.height();}
+							else if (getOffCoord.y < 0) {getOffCoord.y += $gameMap.height();};
+						}
 						return true;
 					}
 				}
@@ -1146,7 +1186,7 @@ var Dahlys = Dahlys || {};
 			oldCoord = this._bigSprite.occupancy; 
 			oldDir = this._direction;
 			_Game_CharacterBase_setDirection.call(this, d);
-			newCoord = this.setBigSpriteCoordinates(); 
+			newCoord = this.setBigSpriteCoordinates();
 			if (oldCoord !== newCoord) {
 				for (var i = 0; i < newCoord.length; i++) {
 					if (!$gameMap.isValid(newCoord[i].x, newCoord[i].y) || this.isCollidedWithCharacters(newCoord[i].x, newCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, d)) {
