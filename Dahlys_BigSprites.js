@@ -679,15 +679,7 @@ var Dahlys = Dahlys || {};
 		var forwardTiles = [];
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, d);
-			if ($gameMap.isLoopHorizontal()) {
-				if (tempX >= $gameMap.width()) {tempX -= $gameMap.width();}
-				else if (tempX < 0) {tempX += $gameMap.width();};
-			}
 			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, d);
-			if ($gameMap.isLoopVertical()) {
-				if (tempY >= $gameMap.height()) {tempY -= $gameMap.height();}
-				else if (tempY < 0) {tempY += $gameMap.height();};
-			}
 			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY})) forwardTiles.push({'x': tempX,'y': tempY});
 		}
 		return forwardTiles;
@@ -702,15 +694,7 @@ var Dahlys = Dahlys || {};
 		}
 		for (var i = 0; i < thisCoord.length; i++) {
 			var tempX = $gameMap.roundXWithDirection(thisCoord[i].x, horz);
-			if ($gameMap.isLoopHorizontal()) {
-				if (tempX >= $gameMap.width()) {tempX -= $gameMap.width();}
-				else if (tempX < 0) {tempX += $gameMap.width();};
-			}
 			var tempY = $gameMap.roundYWithDirection(thisCoord[i].y, vert);
-			if ($gameMap.isLoopVertical()) {
-				if (tempY >= $gameMap.height()) {tempY -= $gameMap.height();}
-				else if (tempY < 0) {tempY += $gameMap.height();};
-			}
 			if (!thisCoord.some(function(xy) {return xy.x === tempX && xy.y === tempY}) && !forwardTiles.some(function(xy) {return xy.x === tempX && xy.y === tempY})) {
 				forwardTiles.push({'x': tempX,'y': tempY});
 			}
@@ -1346,26 +1330,24 @@ var Dahlys = Dahlys || {};
 			this.locate(oneNewX, oneNewY);
 			var oneNewCoord = this._bigSprite.occupancy;
 			var twoNewCoord = character._bigSprite.occupancy;
-			var success = true;
 			for (var i = 0; i < oneNewCoord.length; i++) {
 				if (!$gameMap.isValid(oneNewCoord[i].x, oneNewCoord[i].y) || this.isCollidedWithCharacters(oneNewCoord[i].x, oneNewCoord[i].y) || !this.isMapPassable(newCoord[i].x, newCoord[i].y, this._direction)) {
 					character.locate(twoOldX, twoOldY);
 					this.locate(oneOldX, oneOldY);
-					success = false;
-					break;
+					this.resetStopCount();
+					this.straighten();
+					return;
 				}
 			}
-			if (success) {
-				for (var i = 0; i < twoNewCoord.length; i++) {
-					if (!$gameMap.isValid(twoNewCoord[i].x, twoNewCoord[i].y) || character.isCollidedWithCharacters(twoNewCoord[i].x, twoNewCoord[i].y) || !character.isMapPassable(newCoord[i].x, newCoord[i].y, character._direction)) {
-						character.locate(twoOldX, twoOldY);
-						this.locate(oneOldX, oneOldY);
-						break;
-					}
+			for (var i = 0; i < twoNewCoord.length; i++) {
+				if (!$gameMap.isValid(twoNewCoord[i].x, twoNewCoord[i].y) || character.isCollidedWithCharacters(twoNewCoord[i].x, twoNewCoord[i].y) || !character.isMapPassable(newCoord[i].x, newCoord[i].y, character._direction)) {
+					character.locate(twoOldX, twoOldY);
+					this.locate(oneOldX, oneOldY);
+					this.resetStopCount();
+					this.straighten();
+					return;
 				}
-				this.resetStopCount();
-				this.straighten();
-			}
+			}				
 		} else {
 			_Game_Character_swap.call(this, character);
 		}
