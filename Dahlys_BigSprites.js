@@ -391,8 +391,8 @@ var Dahlys = Dahlys || {};
 			if ((pagelist[i].code === 108 || pagelist[i].code === 408)) {
 				var params = pagelist[i].parameters;
 				for (var j = 0; j < params.length; j++) {				
-					if (params[j].match(/bigSprite:/i)) this.bigSpriteRegexProcessing(params[j]);
-					else if (params[j].match(/bigSpriteSp:/i)) this.bigSpriteSpRegexProcessing(params[j]);
+					if (params[j].match(/bigEvent:/i)) this.bigSpriteRegexProcessing(params[j]);
+					else if (params[j].match(/bigEvent:/i)) this.bigSpriteSpRegexProcessing(params[j]);
 				}
 			}
 		}
