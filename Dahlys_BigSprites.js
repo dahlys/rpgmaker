@@ -322,14 +322,14 @@ var Dahlys = Dahlys || {};
 	
 	Game_Event.prototype.setSpriteSizeFromEventNote = function() {
 		if (this.isSpawnEvent) return;
-		var note = $dataMap.events[this._eventId].meta.bigSprite;
+		var note = $dataMap.events[this._eventId].meta.bigEvent;
 		if (!note) return;		
 		this.bigSpriteRegexProcessing(note);
 	};
 	
 	Game_Event.prototype.setSpriteSpSizeFromEventNote = function() {
 		if (this.isSpawnEvent) return;
-		var note = $dataMap.events[this._eventId].meta.bigSpriteSp;
+		var note = $dataMap.events[this._eventId].meta.bigEventSp;
 		if (!note) return;
 		this.bigSpriteSpRegexProcessing(note);
 	};
@@ -392,7 +392,7 @@ var Dahlys = Dahlys || {};
 				var params = pagelist[i].parameters;
 				for (var j = 0; j < params.length; j++) {				
 					if (params[j].match(/bigEvent:/i)) this.bigSpriteRegexProcessing(params[j]);
-					else if (params[j].match(/bigEvent:/i)) this.bigSpriteSpRegexProcessing(params[j]);
+					else if (params[j].match(/bigEventSp:/i)) this.bigSpriteSpRegexProcessing(params[j]);
 				}
 			}
 		}
