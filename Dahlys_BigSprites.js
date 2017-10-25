@@ -802,7 +802,7 @@ var Dahlys = Dahlys || {};
 					if ($gamePlayer.x === x && $gamePlayer.y === y) {
 						$gamePlayer._vehicleType = vehicleType;
 						clearInterval(move);
-						return this._vehicleGettingOn;						
+						return $gamePlayer._vehicleGettingOn;						
 					}
 				}, 300);
 			}
