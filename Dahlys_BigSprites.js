@@ -903,7 +903,7 @@ var Dahlys = Dahlys || {};
 							}
 						}
 						if (options.length % 2 === 0) {
-							if (d === 2) var middleOption = options.length/2 - 1;
+							if (d === 8) var middleOption = options.length/2 - 1;
 							else var middleOption = options.length/2;
 						} else {
 							var middleOption = Math.floor(options.length/2);
