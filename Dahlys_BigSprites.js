@@ -709,10 +709,12 @@ var Dahlys = Dahlys || {};
 */
 	
 	Game_Player.prototype.forceMoveDirection = function(d) {
+		this._moveRouteForcing = true;
 		this.setThrough(true);		
 		this.setDirection(d);
 		this.moveForward();
 		this.setThrough(false);
+		this._moveRouteForcing = false;
 	};
 	
 	Game_Player.prototype.forceTurnDirection = function(d) {
@@ -734,11 +736,11 @@ var Dahlys = Dahlys || {};
 			var coord = this._bigSprite.occupancy;
 			for (var i = 0; i < coord.length; i++) {
 				if ($gameMap.airship().pos(coord[i].x, coord[i].y)) {
-					this._vehicleType = 'airship';
+					var vehicleType = 'airship';
 					break;
 				}
 			}
-			if (this._vehicleType !== 'airship') {
+			if (vehicleType !== 'airship') {
 				if (Dahlys.Pl_ADT) {
 					var ahead = this.checkAheadTiles(2).concat(this.checkAheadTiles(4), this.checkAheadTiles(6), this.checkAheadTiles(8));
 				} else {
@@ -750,12 +752,12 @@ var Dahlys = Dahlys || {};
 							var d1 = this._direction;
 							var d2 = $gameMap.ship()._direction;
 							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
-								this._vehicleType = 'ship';
+								var vehicleType = 'ship';
 							} else if ((d2 === 2 || d2 === 8) && (d1 === 4 || d1 === 6)) {
-								this._vehicleType = 'ship';
+								var vehicleType = 'ship';
 							}
 						} else {
-							this._vehicleType = 'ship';
+							var vehicleType = 'ship';
 						}					
 						break;
 					} else if ($gameMap.boat().pos(ahead[i].x, ahead[i].y)) {
@@ -763,30 +765,46 @@ var Dahlys = Dahlys || {};
 							var d1 = this._direction;
 							var d2 = $gameMap.boat()._direction;
 							if ((d1 === 2 || d1 === 8) && (d2 === 4 || d2 === 6)) {
-								this._vehicleType = 'boat';
+								var vehicleType = 'boat';
 							} else if ((d2 === 2 || d2 === 8) && (d1 === 4 || d1 === 6)) {
-								this._vehicleType = 'boat';
+								var vehicleType = 'boat';
 							}
 						} else {
-							this._vehicleType = 'boat';
+							var vehicleType = 'boat';
 						}
 						break;
 					}
 				}
 			}
-			if (this.isInVehicle()) {
+			if (vehicleType) {
 				this._vehicleGettingOn = true;
 				this.gatherFollowers();
-				if (this.isInBoat()) var vehicle = $gameMap.boat();
-				if (this.isInShip()) var vehicle = $gameMap.ship();
-				if (this.isInAirship()) var vehicle = $gameMap.airship();				
+				if (vehicleType === 'boat') var vehicle = $gameMap.boat();
+				if (vehicleType === 'ship') var vehicle = $gameMap.ship();
+				if (vehicleType === 'airship') var vehicle = $gameMap.airship();				
 				var x = vehicle._x;
 				var y = vehicle._y;
-				this.setTransparent(true);
-				while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
-				while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
-				while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
-				while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+				var dir = null;
+				if (this._direction === 2 || this._direction === 8) dir = 'vert';
+				var move = setInterval(function() {
+					if (dir === 'vert') {
+						if ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
+						else if ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
+						else if ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
+						else if ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+					} else {
+						if ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
+						else if ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+						else if ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
+						else if ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
+						
+					}
+					if ($gamePlayer.x === x && $gamePlayer.y === y) {
+						$gamePlayer._vehicleType = vehicleType;
+						clearInterval(move);
+						return this._vehicleGettingOn;						
+					}
+				}, 300);
 			}
 			return this._vehicleGettingOn;
 		}
@@ -798,7 +816,7 @@ var Dahlys = Dahlys || {};
 		$gameSystem._bigSprite = $gamePlayer._bigSprite;
 		$gamePlayer.initializeBigSprite();
 		_Game_Vehicle_getOn.call(this); 
-		this.setBigVehicleSize.call($gamePlayer, this._type);
+		this.setBigVehicleSize.call($gamePlayer, this._type); 
 		this.initializeBigSprite();
 		$gamePlayer.setBigSpriteCoordinates();
 	};
