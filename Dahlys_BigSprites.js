@@ -821,7 +821,7 @@ var Dahlys = Dahlys || {};
 		$gamePlayer.setBigSpriteCoordinates();
 	};
 	
-	var getOffCoord = null;
+	Dahlys.getOffCoord = null;
 	
 	var _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
 	Game_Vehicle.prototype.isLandOk = function(x, y, d) {
@@ -876,7 +876,7 @@ var Dahlys = Dahlys || {};
 						} else {
 							var middleOption = Math.floor(options.length/2);
 						}
-						getOffCoord = options[middleOption];
+						Dahlys.getOffCoord = options[middleOption];
 						return true;
 					}
 					var side2Tiles = this.checkAheadTiles.call($gamePlayer, d2);
@@ -908,7 +908,7 @@ var Dahlys = Dahlys || {};
 						} else {
 							var middleOption = Math.floor(options.length/2);
 						}
-						getOffCoord = options[middleOption];
+						Dahlys.getOffCoord = options[middleOption];
 						return true;
 					}
 					return false;
@@ -922,14 +922,14 @@ var Dahlys = Dahlys || {};
 						if (this._direction === 6) plusX = -1;
 						if (this._direction === 8) plusY = 1;
 						if (this._direction === 4) plusX = 1;
-						getOffCoord = {'x': forwardTiles[i].x + plusX, 'y': forwardTiles[i].y + plusY, 'd': this._direction};
+						Dahlys.getOffCoord = {'x': forwardTiles[i].x + plusX, 'y': forwardTiles[i].y + plusY, 'd': this._direction};
 						if ($gameMap.isLoopHorizontal()) {
-							if (getOffCoord.x >= $gameMap.width()) {getOffCoord.x -= $gameMap.width();}
-							else if (getOffCoord.x < 0) {getOffCoord.x += $gameMap.width();};
+							if (Dahlys.getOffCoord.x >= $gameMap.width()) {Dahlys.getOffCoord.x -= $gameMap.width();}
+							else if (Dahlys.getOffCoord.x < 0) {Dahlys.getOffCoord.x += $gameMap.width();};
 						}
 						if ($gameMap.isLoopVertical()) {
-							if (getOffCoord.y >= $gameMap.height()) {getOffCoord.y -= $gameMap.height();}
-							else if (getOffCoord.y < 0) {getOffCoord.y += $gameMap.height();};
+							if (Dahlys.getOffCoord.y >= $gameMap.height()) {Dahlys.getOffCoord.y -= $gameMap.height();}
+							else if (Dahlys.getOffCoord.y < 0) {Dahlys.getOffCoord.y += $gameMap.height();};
 						}
 						return true;
 					}
@@ -960,16 +960,16 @@ var Dahlys = Dahlys || {};
 		$gamePlayer.initializeBigSprite();		
 		_Game_Vehicle_getOff.call(this);
 		this.setDirection(dir);
-		if (getOffCoord) {
-			var x = getOffCoord.x;
-			var y = getOffCoord.y;
+		if (Dahlys.getOffCoord) {
+			var x = Dahlys.getOffCoord.x;
+			var y = Dahlys.getOffCoord.y;
 			while ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
 			while ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
 			while ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
 			while ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
-			$gamePlayer.setDirection(getOffCoord.d);
+			$gamePlayer.setDirection(Dahlys.getOffCoord.d);
 		}
-		getOffCoord = null;
+		Dahlys.getOffCoord = null;
 		$gamePlayer._bigSprite = $gameSystem._bigSprite;
 		$gameSystem.setupBigPlayerSettings();
 		this.setBigVehicleSize(this._type);
