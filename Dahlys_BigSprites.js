@@ -790,23 +790,27 @@ var Dahlys = Dahlys || {};
 				if (vehicleType === 'ship') var vehicle = $gameMap.ship();
 				if (vehicleType === 'airship') var vehicle = $gameMap.airship();				
 				var x = vehicle._x;
-				var y = vehicle._y;
+				var ySee = vehicle._bigSprite.Y0;
+				var yHidden = vehicle._y;
 				var dir = null;
 				if (this._direction === 2 || this._direction === 8) dir = 'vert';
 				var move = setInterval(function() {
 					if (dir === 'vert') {
 						if ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
 						else if ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
-						else if ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
-						else if ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+						else if ($gamePlayer.y < ySee) $gamePlayer.forceMoveDirection(2);
+						else if ($gamePlayer.y > ySee) $gamePlayer.forceMoveDirection(8);
 					} else {
-						if ($gamePlayer.y < y) $gamePlayer.forceMoveDirection(2);
-						else if ($gamePlayer.y > y) $gamePlayer.forceMoveDirection(8);
+						if ($gamePlayer.y < ySee) $gamePlayer.forceMoveDirection(2);
+						else if ($gamePlayer.y > ySee) $gamePlayer.forceMoveDirection(8);
 						else if ($gamePlayer.x < x) $gamePlayer.forceMoveDirection(6);
 						else if ($gamePlayer.x > x) $gamePlayer.forceMoveDirection(4);
 						
 					}
-					if ($gamePlayer.x === x && $gamePlayer.y === y) {
+					if ($gamePlayer.x === x && $gamePlayer.y === ySee) {
+						$gamePlayer.setTransparent(true);
+						while ($gamePlayer.y < yHidden) $gamePlayer.forceMoveDirection(2);
+						while ($gamePlayer.y > yHidden) $gamePlayer.forceMoveDirection(8);
 						$gamePlayer._vehicleType = vehicleType;
 						clearInterval(move);
 						if (Imported.SimpleLandVehicle && vehicleType === 'boat') $gamePlayer.playVehicleDoorSE();
