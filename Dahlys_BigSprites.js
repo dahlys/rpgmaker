@@ -826,116 +826,125 @@ var Dahlys = Dahlys || {};
 	var _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
 	Game_Vehicle.prototype.isLandOk = function(x, y, d) {
 		if ($gamePlayer._bigSprite.type) {
-			if (this.isAirship()) {
-				if (!$gameMap.isAirshipLandOk(x, y)) {
-					return false;
-				}
-				if ($gameMap.eventsXy(x, y).length > 0) {
-					return false;
-				}
-			} else {				
-				if (Dahlys.sideUnload) {
-					if (Dahlys.RHD) {
-						if (d === 2) {var d1 = 6; var d2 = 4;}
-						if (d === 8) {var d1 = 4; var d2 = 6;}
-						if (d === 4) {var d1 = 2; var d2 = 8;}
-						if (d === 6) {var d1 = 8; var d2 = 2;}
-					} else {
-						if (d === 2) {var d1 = 4; var d2 = 6;}
-						if (d === 8) {var d1 = 6; var d2 = 4;}
-						if (d === 4) {var d1 = 8; var d2 = 2;}
-						if (d === 6) {var d1 = 2; var d2 = 8;}
+			if (Imported.YEP_X_VehicleRestrict) {
+				var regionCanLand = this.checkLandingRegionId();
+			} else {
+				var regionCanLand = true;
+			}
+			if (regionCanLand) {
+				if (this.isAirship()) {
+					if (!$gameMap.isAirshipLandOk(x, y)) {
+						return false;
 					}
-					var side1Tiles = this.checkAheadTiles.call($gamePlayer, d1);
-					var options = [];
-					for (var i = 0; i < side1Tiles.length; i++) {
-						if ($gameMap.isValid(side1Tiles[i].x, side1Tiles[i].y) && $gameMap.isPassable(side1Tiles[i].x, side1Tiles[i].y, this.reverseDir(d1)) && !this.isCollidedWithCharacters(side1Tiles[i].x, side1Tiles[i].y)) {
+					if ($gameMap.eventsXy(x, y).length > 0) {
+						return false;
+					}
+				} else {				
+					if (Dahlys.sideUnload) {
+						if (Dahlys.RHD) {
+							if (d === 2) {var d1 = 6; var d2 = 4;}
+							if (d === 8) {var d1 = 4; var d2 = 6;}
+							if (d === 4) {var d1 = 2; var d2 = 8;}
+							if (d === 6) {var d1 = 8; var d2 = 2;}
+						} else {
+							if (d === 2) {var d1 = 4; var d2 = 6;}
+							if (d === 8) {var d1 = 6; var d2 = 4;}
+							if (d === 4) {var d1 = 8; var d2 = 2;}
+							if (d === 6) {var d1 = 2; var d2 = 8;}
+						}
+						var side1Tiles = this.checkAheadTiles.call($gamePlayer, d1);
+						var options = [];
+						for (var i = 0; i < side1Tiles.length; i++) {
+							if ($gameMap.isValid(side1Tiles[i].x, side1Tiles[i].y) && $gameMap.isPassable(side1Tiles[i].x, side1Tiles[i].y, this.reverseDir(d1)) && !this.isCollidedWithCharacters(side1Tiles[i].x, side1Tiles[i].y)) {
+								var plusX = 0;
+								var plusY = 0;
+								if (d1 === 2) plusY = -1;
+								if (d1 === 6) plusX = -1;
+								if (d1 === 8) plusY = 1;
+								if (d1 === 4) plusX = 1;
+								options.push({'x': side1Tiles[i].x + plusX, 'y': side1Tiles[i].y + plusY, 'd': d1});
+							}
+						}
+						if (options.length > 0) {
+							for (var i = 0; i < options.length; i++) {
+								if ($gameMap.isLoopHorizontal()) {
+									if (options[i].x >= $gameMap.width()) {options[i].x -= $gameMap.width();}
+									else if (options[i].x < 0) {options[i].x += $gameMap.width();};
+								}
+								if ($gameMap.isLoopVertical()) {
+									if (options[i].y >= $gameMap.height()) {options[i].y -= $gameMap.height();}
+									else if (options[i].y < 0) {options[i].y += $gameMap.height();};
+								}
+							}
+							if (options.length % 2 === 0) {
+								if (d === 8) var middleOption = options.length/2 - 1;
+								else var middleOption = options.length/2;
+							} else {
+								var middleOption = Math.floor(options.length/2);
+							}
+							Dahlys.getOffCoord = options[middleOption];
+							return true;
+						}
+						var side2Tiles = this.checkAheadTiles.call($gamePlayer, d2);
+						for (var i = 0; i < side2Tiles.length; i++) {
+							if ($gameMap.isValid(side2Tiles[i].x, side2Tiles[i].y) && $gameMap.isPassable(side2Tiles[i].x, side2Tiles[i].y, this.reverseDir(d2)) && !this.isCollidedWithCharacters(side2Tiles[i].x, side2Tiles[i].y)) {
+								var plusX = 0;
+								var plusY = 0;
+								if (d2 === 2) plusY = -1;
+								if (d2 === 6) plusX = -1;
+								if (d2 === 8) plusY = 1;
+								if (d2 === 4) plusX = 1;
+								options.push({'x': side2Tiles[i].x + plusX, 'y': side2Tiles[i].y + plusY, 'd': d2});
+							}
+						}
+						if (options.length > 0) {
+							for (var i = 0; i < options.length; i++) {
+								if ($gameMap.isLoopHorizontal()) {
+									if (options[i].x >= $gameMap.width()) {options[i].x -= $gameMap.width();}
+									else if (options[i].x < 0) {options[i].x += $gameMap.width();};
+								}
+								if ($gameMap.isLoopVertical()) {
+									if (options[i].y >= $gameMap.height()) {options[i].y -= $gameMap.height();}
+									else if (options[i].y < 0) {options[i].y += $gameMap.height();};
+								}
+							}
+							if (options.length % 2 === 0) {
+								if (d === 8) var middleOption = options.length/2 - 1;
+								else var middleOption = options.length/2;
+							} else {
+								var middleOption = Math.floor(options.length/2);
+							}
+							Dahlys.getOffCoord = options[middleOption];
+							return true;
+						}
+						return false;
+					}
+					var forwardTiles = this.checkAheadTiles.call($gamePlayer, d);
+					for (var i = 0; i < forwardTiles.length; i++) {
+						if ($gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y) && $gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, this.reverseDir(d)) && !this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) {
 							var plusX = 0;
 							var plusY = 0;
-							if (d1 === 2) plusY = -1;
-							if (d1 === 6) plusX = -1;
-							if (d1 === 8) plusY = 1;
-							if (d1 === 4) plusX = 1;
-							options.push({'x': side1Tiles[i].x + plusX, 'y': side1Tiles[i].y + plusY, 'd': d1});
-						}
-					}
-					if (options.length > 0) {
-						for (var i = 0; i < options.length; i++) {
+							if (this._direction === 2) plusY = -1;
+							if (this._direction === 6) plusX = -1;
+							if (this._direction === 8) plusY = 1;
+							if (this._direction === 4) plusX = 1;
+							Dahlys.getOffCoord = {'x': forwardTiles[i].x + plusX, 'y': forwardTiles[i].y + plusY, 'd': this._direction};
 							if ($gameMap.isLoopHorizontal()) {
-								if (options[i].x >= $gameMap.width()) {options[i].x -= $gameMap.width();}
-								else if (options[i].x < 0) {options[i].x += $gameMap.width();};
+								if (Dahlys.getOffCoord.x >= $gameMap.width()) {Dahlys.getOffCoord.x -= $gameMap.width();}
+								else if (Dahlys.getOffCoord.x < 0) {Dahlys.getOffCoord.x += $gameMap.width();};
 							}
 							if ($gameMap.isLoopVertical()) {
-								if (options[i].y >= $gameMap.height()) {options[i].y -= $gameMap.height();}
-								else if (options[i].y < 0) {options[i].y += $gameMap.height();};
+								if (Dahlys.getOffCoord.y >= $gameMap.height()) {Dahlys.getOffCoord.y -= $gameMap.height();}
+								else if (Dahlys.getOffCoord.y < 0) {Dahlys.getOffCoord.y += $gameMap.height();};
 							}
+							return true;
 						}
-						if (options.length % 2 === 0) {
-							if (d === 2) var middleOption = options.length/2 - 1;
-							else var middleOption = options.length/2;
-						} else {
-							var middleOption = Math.floor(options.length/2);
-						}
-						Dahlys.getOffCoord = options[middleOption];
-						return true;
-					}
-					var side2Tiles = this.checkAheadTiles.call($gamePlayer, d2);
-					for (var i = 0; i < side2Tiles.length; i++) {
-						if ($gameMap.isValid(side2Tiles[i].x, side2Tiles[i].y) && $gameMap.isPassable(side2Tiles[i].x, side2Tiles[i].y, this.reverseDir(d2)) && !this.isCollidedWithCharacters(side2Tiles[i].x, side2Tiles[i].y)) {
-							var plusX = 0;
-							var plusY = 0;
-							if (d2 === 2) plusY = -1;
-							if (d2 === 6) plusX = -1;
-							if (d2 === 8) plusY = 1;
-							if (d2 === 4) plusX = 1;
-							options.push({'x': side2Tiles[i].x + plusX, 'y': side2Tiles[i].y + plusY, 'd': d2});
-						}
-					}
-					if (options.length > 0) {
-						for (var i = 0; i < options.length; i++) {
-							if ($gameMap.isLoopHorizontal()) {
-								if (options[i].x >= $gameMap.width()) {options[i].x -= $gameMap.width();}
-								else if (options[i].x < 0) {options[i].x += $gameMap.width();};
-							}
-							if ($gameMap.isLoopVertical()) {
-								if (options[i].y >= $gameMap.height()) {options[i].y -= $gameMap.height();}
-								else if (options[i].y < 0) {options[i].y += $gameMap.height();};
-							}
-						}
-						if (options.length % 2 === 0) {
-							if (d === 8) var middleOption = options.length/2 - 1;
-							else var middleOption = options.length/2;
-						} else {
-							var middleOption = Math.floor(options.length/2);
-						}
-						Dahlys.getOffCoord = options[middleOption];
-						return true;
 					}
 					return false;
 				}
-				var forwardTiles = this.checkAheadTiles.call($gamePlayer, d);
-				for (var i = 0; i < forwardTiles.length; i++) {
-					if ($gameMap.isValid(forwardTiles[i].x, forwardTiles[i].y) && $gameMap.isPassable(forwardTiles[i].x, forwardTiles[i].y, this.reverseDir(d)) && !this.isCollidedWithCharacters(forwardTiles[i].x, forwardTiles[i].y)) {
-						var plusX = 0;
-						var plusY = 0;
-						if (this._direction === 2) plusY = -1;
-						if (this._direction === 6) plusX = -1;
-						if (this._direction === 8) plusY = 1;
-						if (this._direction === 4) plusX = 1;
-						Dahlys.getOffCoord = {'x': forwardTiles[i].x + plusX, 'y': forwardTiles[i].y + plusY, 'd': this._direction};
-						if ($gameMap.isLoopHorizontal()) {
-							if (Dahlys.getOffCoord.x >= $gameMap.width()) {Dahlys.getOffCoord.x -= $gameMap.width();}
-							else if (Dahlys.getOffCoord.x < 0) {Dahlys.getOffCoord.x += $gameMap.width();};
-						}
-						if ($gameMap.isLoopVertical()) {
-							if (Dahlys.getOffCoord.y >= $gameMap.height()) {Dahlys.getOffCoord.y -= $gameMap.height();}
-							else if (Dahlys.getOffCoord.y < 0) {Dahlys.getOffCoord.y += $gameMap.height();};
-						}
-						return true;
-					}
-				}
+			} else {
 				return false;
-			}			
+			}				
 		}
 		return _Game_Vehicle_isLandOk.call(this, x, y, d);		
 	};
@@ -953,6 +962,23 @@ var Dahlys = Dahlys || {};
 		}
 		return _Game_Map_isAirshipLandOk.call(this, x, y);
 	};
+	
+	if (Imported.YEP_X_VehicleRestrict) {
+		Game_Vehicle.prototype.checkLandingRegionId = function() {
+			var vehicle = this._type;
+			var coord = $gamePlayer._bigSprite.occupancy;
+			var regionId = [];
+			for (var i = 0; i < coord.length; i++) {
+				regionId.push($gameMap.regionId(coord[i].x, coord[i].y));
+			}
+			if ($gameMap.isVehicleRegionLandSpecific(vehicle)) {
+				for (var i = 0; i < regionId.length; i++) {
+					if (!$gameMap.isVehicleRegionLandOk(regionId[i], vehicle)) return false;
+				}
+			}
+			return true;
+		};
+	}
 
 	var _Game_Vehicle_getOff = Game_Vehicle.prototype.getOff;
 	Game_Vehicle.prototype.getOff = function() {
