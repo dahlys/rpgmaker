@@ -7,7 +7,7 @@
  * @default 120
  * 
  * @param Default View Distance
- * @desc Character default view distance
+ * @desc Character default view distance in pixels
  * @default 300
  * 
  * @param Blocked Terrain Tags
