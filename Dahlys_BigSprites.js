@@ -50,6 +50,10 @@
  * @param Touch Fix B
  * @desc Fix touch input if using type B big player/vehicle. Will overwrite findDirectionTo!
  * @default false
+ * 
+ * @param Galv Diagonal Charset
+ * @desc Diagonal Character Sets from Galv's Diagonal Movement
+ * @default true 
  *
  * @help
  * ==============================================================================
@@ -273,8 +277,9 @@ var Dahlys = Dahlys || {};
 	Dahlys.RHD = eval(parameters['Right Hand Drive']);
 	Dahlys.vehicleReverse = eval(parameters['Vehicle Reverse']);
 	Dahlys.touchFixB = eval(parameters['Touch Fix B']);
+	Dahlys.galvDaigCharSet = eval(parameters['Galv Diagonal Charset']);
 	
-/* 
+/* v
 -------------------------------------------------------------------------------------------------------------------------------------------
 		INITIALIZE NEW VARIABLES
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -320,7 +325,7 @@ var Dahlys = Dahlys || {};
 		if (Dahlys.autoSetComment) this.setSpriteSizeFromPageComment();	
 		this.setBigSpriteCoordinates();
 	};		
-	
+		
 /* 
 -------------------------------------------------------------------------------------------------------------------------------------------
 		SETUP BIG EVENT
@@ -1135,7 +1140,7 @@ var Dahlys = Dahlys || {};
 	if (Dahlys.diagMovement) {
 		var _Game_Player_canPassDiagonally = Game_Player.prototype.canPassDiagonally;
 		Game_Player.prototype.canPassDiagonally = function(x, y, horz, vert) {
-			if (this._bigSprite.type) {
+			if (this._bigSprite.type) {				
 				if (this.isThrough() || this.isDebugThrough()) return true;
 				if (this === $gamePlayer && this.isInAirship())return true;
 				var tilesToCheck = this.checkDiagonalTiles(horz, vert);
@@ -1212,9 +1217,18 @@ var Dahlys = Dahlys || {};
 		this.setBigSpriteCoordinates();
 	};
 	
+	Dahlys.getDir = function(horz,vert) {
+		if (horz == 4 && vert == 2) return 1;
+		if (horz == 6 && vert == 2) return 3;
+		if (horz == 4 && vert == 8) return 7;
+		if (horz == 6 && vert == 8) return 9;
+		return 0;
+	};
+	
 	var _Game_Character_moveStraight = Game_Character.prototype.moveStraight;
 	Game_Character.prototype.moveStraight = function(d) {		
 		if (this._bigSprite.type) {
+			if (Dahlys.galvDaigCharSet) { this._diagDir = false; }
 			var success = false;
 			if (Dahlys.vehicleReverse && this === $gamePlayer && this.isInVehicle() && this._direction === 10 - d) {
 				success = true;
@@ -1250,6 +1264,7 @@ var Dahlys = Dahlys || {};
 	var _Game_Character_moveDiagonally = Game_Character.prototype.moveDiagonally;
 	Game_Character.prototype.moveDiagonally = function(horz, vert) {	
 		if (this._bigSprite.type) {
+			if (Dahlys.galvDaigCharSet) { this._diagDir = Dahlys.getDir(horz,vert); }
 			this.setMovementSuccess(this.canPassDiagonally(this._x, this._y, horz, vert));		
 			if (this.isMovementSucceeded()) {
 				this._x = $gameMap.roundXWithDirection(this._x, horz);
