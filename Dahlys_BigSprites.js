@@ -53,7 +53,7 @@
  * 
  * @param Galv Diagonal Charset
  * @desc Diagonal Character Sets from Galv's Diagonal Movement
- * @default true 
+ * @default false
  *
  * @help
  * ==============================================================================
